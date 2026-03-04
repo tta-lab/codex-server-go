@@ -859,7 +859,7 @@ func (g *codeGenerator) genTypeDiscriminatedUnion(goName string, defn map[string
 	lines = append(lines, "\tif u.Data != nil {")
 	lines = append(lines, "\t\treturn []byte(u.Data), nil")
 	lines = append(lines, "\t}")
-	lines = append(lines, fmt.Sprintf("\treturn json.Marshal(struct{ Type string `json:\"type\"` }{Type: u.Type})"))
+	lines = append(lines, "\treturn json.Marshal(struct{ Type string `json:\"type\"` }{Type: u.Type})")
 	lines = append(lines, "}\n")
 
 	// Type constants
