@@ -4,5 +4,5 @@
 // All types in *_gen.go files are generated from the JSON Schema at
 // schema/codex_app_server_protocol.schemas.json. Do not edit them by hand.
 //
-//go:generate python3 ../cmd/codegen/main.py
+//go:generate go run ../cmd/codegen
 package protocol

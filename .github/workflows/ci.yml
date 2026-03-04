@@ -15,21 +15,30 @@ jobs:
         with:
           go-version-file: go.mod
 
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
+      - name: Check formatting
+        run: |
+          diff=$(gofmt -d -s .)
+          if [ -n "$diff" ]; then
+            echo "Code is not formatted. Run 'gofmt -w -s .'"
+            echo "$diff"
+            exit 1
+          fi
 
       - name: Verify generated files are up-to-date
         run: |
           make generate
-          if [ -n "$(git diff --name-only)" ]; then
-            echo "Generated files are out of date. Run 'make generate' and commit."
-            git diff --stat
-            exit 1
-          fi
+          make check-generate
 
       - name: Vet
         run: go vet ./...
 
+      - name: Lint
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: latest
+
       - name: Test
         run: go test ./...
+
+      - name: Build
+        run: go build ./...
