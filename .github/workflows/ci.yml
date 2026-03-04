@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Check formatting
+        run: |
+          diff=$(gofmt -d -s .)
+          if [ -n "$diff" ]; then
+            echo "Code is not formatted. Run 'gofmt -w -s .'"
+            echo "$diff"
+            exit 1
+          fi
+
+      - name: Verify generated files are up-to-date
+        run: |
+          make generate
+          make check-generate
+
+      - name: Vet
+        run: go vet ./...
+
+      - name: Lint
+        uses: golangci/golangci-lint-action@v6
+        with:
+          version: latest
+
+      - name: Test
+        run: go test ./...
+
+      - name: Build
+        run: go build ./...
