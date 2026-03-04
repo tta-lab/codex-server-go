@@ -7,6 +7,51 @@ import (
 	"fmt"
 )
 
+type AgentMessageContent struct {
+	Type string          `json:"type"`
+	Data json.RawMessage `json:"-"`
+}
+
+func (u *AgentMessageContent) UnmarshalJSON(data []byte) error {
+	var disc struct {
+		Type string `json:"type"`
+	}
+	if err := json.Unmarshal(data, &disc); err != nil {
+		return err
+	}
+	u.Type = disc.Type
+	u.Data = append(u.Data[:0], data...)
+	return nil
+}
+
+func (u AgentMessageContent) MarshalJSON() ([]byte, error) {
+	if u.Data != nil {
+		return []byte(u.Data), nil
+	}
+	return json.Marshal(struct {
+		Type string `json:"type"`
+	}{Type: u.Type})
+}
+
+// AgentMessageContent type discriminator values.
+const (
+	AgentMessageContentTypeText = "Text"
+)
+
+type TextAgentMessageContent struct {
+	Text string `json:"text"`
+	Type string `json:"type"`
+}
+
+// AsText unmarshals the union as TextAgentMessageContent (type="Text").
+func (u *AgentMessageContent) AsText() (*TextAgentMessageContent, error) {
+	var v TextAgentMessageContent
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal AgentMessageContent as TextAgentMessageContent: %w", err)
+	}
+	return &v, nil
+}
+
 type ClientNotification struct {
 	Method string `json:"method"`
 }
@@ -356,6 +401,1695 @@ func (m *ClientRequest) FuzzyFileSearchParams() (*FuzzyFileSearchParams, error) 
 	var v FuzzyFileSearchParams
 	if err := json.Unmarshal(m.Params, &v); err != nil {
 		return nil, fmt.Errorf("unmarshal fuzzyFileSearch params: %w", err)
+	}
+	return &v, nil
+}
+
+// EventMsg Response event from the agent NOTE: Make sure none of these values have optional types, as it will mess up the extension code-gen.
+type EventMsg struct {
+	Type string          `json:"type"`
+	Data json.RawMessage `json:"-"`
+}
+
+func (u *EventMsg) UnmarshalJSON(data []byte) error {
+	var disc struct {
+		Type string `json:"type"`
+	}
+	if err := json.Unmarshal(data, &disc); err != nil {
+		return err
+	}
+	u.Type = disc.Type
+	u.Data = append(u.Data[:0], data...)
+	return nil
+}
+
+func (u EventMsg) MarshalJSON() ([]byte, error) {
+	if u.Data != nil {
+		return []byte(u.Data), nil
+	}
+	return json.Marshal(struct {
+		Type string `json:"type"`
+	}{Type: u.Type})
+}
+
+// EventMsg type discriminator values.
+const (
+	EventMsgTypeError                         = "error"
+	EventMsgTypeWarning                       = "warning"
+	EventMsgTypeRealtimeConversationStarted   = "realtime_conversation_started"
+	EventMsgTypeRealtimeConversationRealtime  = "realtime_conversation_realtime"
+	EventMsgTypeRealtimeConversationClosed    = "realtime_conversation_closed"
+	EventMsgTypeModelReroute                  = "model_reroute"
+	EventMsgTypeContextCompacted              = "context_compacted"
+	EventMsgTypeThreadRolledBack              = "thread_rolled_back"
+	EventMsgTypeTaskStarted                   = "task_started"
+	EventMsgTypeTaskComplete                  = "task_complete"
+	EventMsgTypeTokenCount                    = "token_count"
+	EventMsgTypeAgentMessage                  = "agent_message"
+	EventMsgTypeUserMessage                   = "user_message"
+	EventMsgTypeAgentMessageDelta             = "agent_message_delta"
+	EventMsgTypeAgentReasoning                = "agent_reasoning"
+	EventMsgTypeAgentReasoningDelta           = "agent_reasoning_delta"
+	EventMsgTypeAgentReasoningRawContent      = "agent_reasoning_raw_content"
+	EventMsgTypeAgentReasoningRawContentDelta = "agent_reasoning_raw_content_delta"
+	EventMsgTypeAgentReasoningSectionBreak    = "agent_reasoning_section_break"
+	EventMsgTypeSessionConfigured             = "session_configured"
+	EventMsgTypeThreadNameUpdated             = "thread_name_updated"
+	EventMsgTypeMcpStartupUpdate              = "mcp_startup_update"
+	EventMsgTypeMcpStartupComplete            = "mcp_startup_complete"
+	EventMsgTypeMcpToolCallBegin              = "mcp_tool_call_begin"
+	EventMsgTypeMcpToolCallEnd                = "mcp_tool_call_end"
+	EventMsgTypeWebSearchBegin                = "web_search_begin"
+	EventMsgTypeWebSearchEnd                  = "web_search_end"
+	EventMsgTypeExecCommandBegin              = "exec_command_begin"
+	EventMsgTypeExecCommandOutputDelta        = "exec_command_output_delta"
+	EventMsgTypeTerminalInteraction           = "terminal_interaction"
+	EventMsgTypeExecCommandEnd                = "exec_command_end"
+	EventMsgTypeViewImageToolCall             = "view_image_tool_call"
+	EventMsgTypeExecApprovalRequest           = "exec_approval_request"
+	EventMsgTypeRequestUserInput              = "request_user_input"
+	EventMsgTypeDynamicToolCallRequest        = "dynamic_tool_call_request"
+	EventMsgTypeDynamicToolCallResponse       = "dynamic_tool_call_response"
+	EventMsgTypeElicitationRequest            = "elicitation_request"
+	EventMsgTypeApplyPatchApprovalRequest     = "apply_patch_approval_request"
+	EventMsgTypeDeprecationNotice             = "deprecation_notice"
+	EventMsgTypeBackgroundEvent               = "background_event"
+	EventMsgTypeUndoStarted                   = "undo_started"
+	EventMsgTypeUndoCompleted                 = "undo_completed"
+	EventMsgTypeStreamError                   = "stream_error"
+	EventMsgTypePatchApplyBegin               = "patch_apply_begin"
+	EventMsgTypePatchApplyEnd                 = "patch_apply_end"
+	EventMsgTypeTurnDiff                      = "turn_diff"
+	EventMsgTypeGetHistoryEntryResponse       = "get_history_entry_response"
+	EventMsgTypeMcpListToolsResponse          = "mcp_list_tools_response"
+	EventMsgTypeListCustomPromptsResponse     = "list_custom_prompts_response"
+	EventMsgTypeListSkillsResponse            = "list_skills_response"
+	EventMsgTypeListRemoteSkillsResponse      = "list_remote_skills_response"
+	EventMsgTypeRemoteSkillDownloaded         = "remote_skill_downloaded"
+	EventMsgTypeSkillsUpdateAvailable         = "skills_update_available"
+	EventMsgTypePlanUpdate                    = "plan_update"
+	EventMsgTypeTurnAborted                   = "turn_aborted"
+	EventMsgTypeShutdownComplete              = "shutdown_complete"
+	EventMsgTypeEnteredReviewMode             = "entered_review_mode"
+	EventMsgTypeExitedReviewMode              = "exited_review_mode"
+	EventMsgTypeRawResponseItem               = "raw_response_item"
+	EventMsgTypeItemStarted                   = "item_started"
+	EventMsgTypeItemCompleted                 = "item_completed"
+	EventMsgTypeAgentMessageContentDelta      = "agent_message_content_delta"
+	EventMsgTypePlanDelta                     = "plan_delta"
+	EventMsgTypeReasoningContentDelta         = "reasoning_content_delta"
+	EventMsgTypeReasoningRawContentDelta      = "reasoning_raw_content_delta"
+	EventMsgTypeCollabAgentSpawnBegin         = "collab_agent_spawn_begin"
+	EventMsgTypeCollabAgentSpawnEnd           = "collab_agent_spawn_end"
+	EventMsgTypeCollabAgentInteractionBegin   = "collab_agent_interaction_begin"
+	EventMsgTypeCollabAgentInteractionEnd     = "collab_agent_interaction_end"
+	EventMsgTypeCollabWaitingBegin            = "collab_waiting_begin"
+	EventMsgTypeCollabWaitingEnd              = "collab_waiting_end"
+	EventMsgTypeCollabCloseBegin              = "collab_close_begin"
+	EventMsgTypeCollabCloseEnd                = "collab_close_end"
+	EventMsgTypeCollabResumeBegin             = "collab_resume_begin"
+	EventMsgTypeCollabResumeEnd               = "collab_resume_end"
+)
+
+// ErrorEventMsg Error while executing a submission
+type ErrorEventMsg struct {
+	CodexErrorInfo *CodexErrorInfo `json:"codex_error_info,omitempty"`
+	Message        string          `json:"message"`
+	Type           string          `json:"type"`
+}
+
+// AsError unmarshals the union as ErrorEventMsg (type="error").
+func (u *EventMsg) AsError() (*ErrorEventMsg, error) {
+	var v ErrorEventMsg
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal EventMsg as ErrorEventMsg: %w", err)
+	}
+	return &v, nil
+}
+
+// WarningEventMsg Warning issued while processing a submission. Unlike `Error`, this indicates the turn continued but the user should still be notified.
+type WarningEventMsg struct {
+	Message string `json:"message"`
+	Type    string `json:"type"`
+}
+
+// AsWarning unmarshals the union as WarningEventMsg (type="warning").
+func (u *EventMsg) AsWarning() (*WarningEventMsg, error) {
+	var v WarningEventMsg
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal EventMsg as WarningEventMsg: %w", err)
+	}
+	return &v, nil
+}
+
+// RealtimeConversationStartedEventMsg Realtime conversation lifecycle start event.
+type RealtimeConversationStartedEventMsg struct {
+	SessionID *string `json:"session_id,omitempty"`
+	Type      string  `json:"type"`
+}
+
+// AsRealtimeConversationStarted unmarshals the union as RealtimeConversationStartedEventMsg (type="realtime_conversation_started").
+func (u *EventMsg) AsRealtimeConversationStarted() (*RealtimeConversationStartedEventMsg, error) {
+	var v RealtimeConversationStartedEventMsg
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal EventMsg as RealtimeConversationStartedEventMsg: %w", err)
+	}
+	return &v, nil
+}
+
+// RealtimeConversationRealtimeEventMsg Realtime conversation streaming payload event.
+type RealtimeConversationRealtimeEventMsg struct {
+	Payload RealtimeEvent `json:"payload"`
+	Type    string        `json:"type"`
+}
+
+// AsRealtimeConversationRealtime unmarshals the union as RealtimeConversationRealtimeEventMsg (type="realtime_conversation_realtime").
+func (u *EventMsg) AsRealtimeConversationRealtime() (*RealtimeConversationRealtimeEventMsg, error) {
+	var v RealtimeConversationRealtimeEventMsg
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal EventMsg as RealtimeConversationRealtimeEventMsg: %w", err)
+	}
+	return &v, nil
+}
+
+// RealtimeConversationClosedEventMsg Realtime conversation lifecycle close event.
+type RealtimeConversationClosedEventMsg struct {
+	Reason *string `json:"reason,omitempty"`
+	Type   string  `json:"type"`
+}
+
+// AsRealtimeConversationClosed unmarshals the union as RealtimeConversationClosedEventMsg (type="realtime_conversation_closed").
+func (u *EventMsg) AsRealtimeConversationClosed() (*RealtimeConversationClosedEventMsg, error) {
+	var v RealtimeConversationClosedEventMsg
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal EventMsg as RealtimeConversationClosedEventMsg: %w", err)
+	}
+	return &v, nil
+}
+
+// ModelRerouteEventMsg Model routing changed from the requested model to a different model.
+type ModelRerouteEventMsg struct {
+	FromModel string             `json:"from_model"`
+	Reason    ModelRerouteReason `json:"reason"`
+	ToModel   string             `json:"to_model"`
+	Type      string             `json:"type"`
+}
+
+// AsModelReroute unmarshals the union as ModelRerouteEventMsg (type="model_reroute").
+func (u *EventMsg) AsModelReroute() (*ModelRerouteEventMsg, error) {
+	var v ModelRerouteEventMsg
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal EventMsg as ModelRerouteEventMsg: %w", err)
+	}
+	return &v, nil
+}
+
+// ContextCompactedEventMsg Conversation history was compacted (either automatically or manually).
+type ContextCompactedEventMsg struct {
+	Type string `json:"type"`
+}
+
+// AsContextCompacted unmarshals the union as ContextCompactedEventMsg (type="context_compacted").
+func (u *EventMsg) AsContextCompacted() (*ContextCompactedEventMsg, error) {
+	var v ContextCompactedEventMsg
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal EventMsg as ContextCompactedEventMsg: %w", err)
+	}
+	return &v, nil
+}
+
+// ThreadRolledBackEventMsg Conversation history was rolled back by dropping the last N user turns.
+type ThreadRolledBackEventMsg struct {
+	// Number of user turns that were removed from context.
+	NumTurns int64  `json:"num_turns"`
+	Type     string `json:"type"`
+}
+
+// AsThreadRolledBack unmarshals the union as ThreadRolledBackEventMsg (type="thread_rolled_back").
+func (u *EventMsg) AsThreadRolledBack() (*ThreadRolledBackEventMsg, error) {
+	var v ThreadRolledBackEventMsg
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal EventMsg as ThreadRolledBackEventMsg: %w", err)
+	}
+	return &v, nil
+}
+
+// TaskStartedEventMsg Agent has started a turn. v1 wire format uses `task_started`; accept `turn_started` for v2 interop.
+type TaskStartedEventMsg struct {
+	CollaborationModeKind json.RawMessage `json:"collaboration_mode_kind,omitempty"`
+	ModelContextWindow    *int64          `json:"model_context_window,omitempty"`
+	TurnID                string          `json:"turn_id"`
+	Type                  string          `json:"type"`
+}
+
+// AsTaskStarted unmarshals the union as TaskStartedEventMsg (type="task_started").
+func (u *EventMsg) AsTaskStarted() (*TaskStartedEventMsg, error) {
+	var v TaskStartedEventMsg
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal EventMsg as TaskStartedEventMsg: %w", err)
+	}
+	return &v, nil
+}
+
+// TaskCompleteEventMsg Agent has completed all actions. v1 wire format uses `task_complete`; accept `turn_complete` for v2 interop.
+type TaskCompleteEventMsg struct {
+	LastAgentMessage *string `json:"last_agent_message,omitempty"`
+	TurnID           string  `json:"turn_id"`
+	Type             string  `json:"type"`
+}
+
+// AsTaskComplete unmarshals the union as TaskCompleteEventMsg (type="task_complete").
+func (u *EventMsg) AsTaskComplete() (*TaskCompleteEventMsg, error) {
+	var v TaskCompleteEventMsg
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal EventMsg as TaskCompleteEventMsg: %w", err)
+	}
+	return &v, nil
+}
+
+// TokenCountEventMsg Usage update for the current session, including totals and last turn. Optional means unknown — UIs should not display when `None`.
+type TokenCountEventMsg struct {
+	Info       *TokenUsageInfo    `json:"info,omitempty"`
+	RateLimits *RateLimitSnapshot `json:"rate_limits,omitempty"`
+	Type       string             `json:"type"`
+}
+
+// AsTokenCount unmarshals the union as TokenCountEventMsg (type="token_count").
+func (u *EventMsg) AsTokenCount() (*TokenCountEventMsg, error) {
+	var v TokenCountEventMsg
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal EventMsg as TokenCountEventMsg: %w", err)
+	}
+	return &v, nil
+}
+
+// AgentMessageEventMsg Agent text output message
+type AgentMessageEventMsg struct {
+	Message string        `json:"message"`
+	Phase   *MessagePhase `json:"phase,omitempty"`
+	Type    string        `json:"type"`
+}
+
+// AsAgentMessage unmarshals the union as AgentMessageEventMsg (type="agent_message").
+func (u *EventMsg) AsAgentMessage() (*AgentMessageEventMsg, error) {
+	var v AgentMessageEventMsg
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal EventMsg as AgentMessageEventMsg: %w", err)
+	}
+	return &v, nil
+}
+
+// UserMessageEventMsg User/system input message (what was sent to the model)
+type UserMessageEventMsg struct {
+	// Image URLs sourced from `UserInput::Image`. These are safe to replay in legacy UI history events and correspond to images sent to the model.
+	Images []string `json:"images,omitempty"`
+	// Local file paths sourced from `UserInput::LocalImage`. These are kept so the UI can reattach images when editing history, and should not be sent to the model or treated as API-ready URLs.
+	LocalImages []string `json:"local_images,omitempty"`
+	Message     string   `json:"message"`
+	// UI-defined spans within `message` used to render or persist special elements.
+	TextElements []TextElement `json:"text_elements,omitempty"`
+	Type         string        `json:"type"`
+}
+
+// AsUserMessage unmarshals the union as UserMessageEventMsg (type="user_message").
+func (u *EventMsg) AsUserMessage() (*UserMessageEventMsg, error) {
+	var v UserMessageEventMsg
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal EventMsg as UserMessageEventMsg: %w", err)
+	}
+	return &v, nil
+}
+
+// AgentMessageDeltaEventMsg Agent text output delta message
+type AgentMessageDeltaEventMsg struct {
+	Delta string `json:"delta"`
+	Type  string `json:"type"`
+}
+
+// AsAgentMessageDelta unmarshals the union as AgentMessageDeltaEventMsg (type="agent_message_delta").
+func (u *EventMsg) AsAgentMessageDelta() (*AgentMessageDeltaEventMsg, error) {
+	var v AgentMessageDeltaEventMsg
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal EventMsg as AgentMessageDeltaEventMsg: %w", err)
+	}
+	return &v, nil
+}
+
+// AgentReasoningEventMsg Reasoning event from agent.
+type AgentReasoningEventMsg struct {
+	Text string `json:"text"`
+	Type string `json:"type"`
+}
+
+// AsAgentReasoning unmarshals the union as AgentReasoningEventMsg (type="agent_reasoning").
+func (u *EventMsg) AsAgentReasoning() (*AgentReasoningEventMsg, error) {
+	var v AgentReasoningEventMsg
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal EventMsg as AgentReasoningEventMsg: %w", err)
+	}
+	return &v, nil
+}
+
+// AgentReasoningDeltaEventMsg Agent reasoning delta event from agent.
+type AgentReasoningDeltaEventMsg struct {
+	Delta string `json:"delta"`
+	Type  string `json:"type"`
+}
+
+// AsAgentReasoningDelta unmarshals the union as AgentReasoningDeltaEventMsg (type="agent_reasoning_delta").
+func (u *EventMsg) AsAgentReasoningDelta() (*AgentReasoningDeltaEventMsg, error) {
+	var v AgentReasoningDeltaEventMsg
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal EventMsg as AgentReasoningDeltaEventMsg: %w", err)
+	}
+	return &v, nil
+}
+
+// AgentReasoningRawContentEventMsg Raw chain-of-thought from agent.
+type AgentReasoningRawContentEventMsg struct {
+	Text string `json:"text"`
+	Type string `json:"type"`
+}
+
+// AsAgentReasoningRawContent unmarshals the union as AgentReasoningRawContentEventMsg (type="agent_reasoning_raw_content").
+func (u *EventMsg) AsAgentReasoningRawContent() (*AgentReasoningRawContentEventMsg, error) {
+	var v AgentReasoningRawContentEventMsg
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal EventMsg as AgentReasoningRawContentEventMsg: %w", err)
+	}
+	return &v, nil
+}
+
+// AgentReasoningRawContentDeltaEventMsg Agent reasoning content delta event from agent.
+type AgentReasoningRawContentDeltaEventMsg struct {
+	Delta string `json:"delta"`
+	Type  string `json:"type"`
+}
+
+// AsAgentReasoningRawContentDelta unmarshals the union as AgentReasoningRawContentDeltaEventMsg (type="agent_reasoning_raw_content_delta").
+func (u *EventMsg) AsAgentReasoningRawContentDelta() (*AgentReasoningRawContentDeltaEventMsg, error) {
+	var v AgentReasoningRawContentDeltaEventMsg
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal EventMsg as AgentReasoningRawContentDeltaEventMsg: %w", err)
+	}
+	return &v, nil
+}
+
+// AgentReasoningSectionBreakEventMsg Signaled when the model begins a new reasoning summary section (e.g., a new titled block).
+type AgentReasoningSectionBreakEventMsg struct {
+	ItemID       *string `json:"item_id,omitempty"`
+	SummaryIndex *int64  `json:"summary_index,omitempty"`
+	Type         string  `json:"type"`
+}
+
+// AsAgentReasoningSectionBreak unmarshals the union as AgentReasoningSectionBreakEventMsg (type="agent_reasoning_section_break").
+func (u *EventMsg) AsAgentReasoningSectionBreak() (*AgentReasoningSectionBreakEventMsg, error) {
+	var v AgentReasoningSectionBreakEventMsg
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal EventMsg as AgentReasoningSectionBreakEventMsg: %w", err)
+	}
+	return &v, nil
+}
+
+// SessionConfiguredEventMsg Ack the client's configure message.
+type SessionConfiguredEventMsg struct {
+	// When to escalate for approval for execution
+	ApprovalPolicy json.RawMessage `json:"approval_policy"`
+	// Working directory that should be treated as the *root* of the session.
+	Cwd          string    `json:"cwd"`
+	ForkedFromID *ThreadID `json:"forked_from_id,omitempty"`
+	// Current number of entries in the history log.
+	HistoryEntryCount int64 `json:"history_entry_count"`
+	// Identifier of the history log file (inode on Unix, 0 otherwise).
+	HistoryLogID int64 `json:"history_log_id"`
+	// Optional initial messages (as events) for resumed sessions. When present, UIs can use these to seed the history.
+	InitialMessages []EventMsg `json:"initial_messages,omitempty"`
+	// Tell the client what model is being queried.
+	Model           string `json:"model"`
+	ModelProviderID string `json:"model_provider_id"`
+	// Runtime proxy bind addresses, when the managed proxy was started for this session.
+	NetworkProxy *SessionNetworkProxyRuntime `json:"network_proxy,omitempty"`
+	// The effort the model is putting into reasoning about the user's request.
+	ReasoningEffort *ReasoningEffort `json:"reasoning_effort,omitempty"`
+	// Path in which the rollout is stored. Can be `None` for ephemeral threads
+	RolloutPath *string `json:"rollout_path,omitempty"`
+	// How to sandbox commands executed in the system
+	SandboxPolicy json.RawMessage `json:"sandbox_policy"`
+	ServiceTier   *ServiceTier    `json:"service_tier,omitempty"`
+	SessionID     ThreadID        `json:"session_id"`
+	// Optional user-facing thread name (may be unset).
+	ThreadName *string `json:"thread_name,omitempty"`
+	Type       string  `json:"type"`
+}
+
+// AsSessionConfigured unmarshals the union as SessionConfiguredEventMsg (type="session_configured").
+func (u *EventMsg) AsSessionConfigured() (*SessionConfiguredEventMsg, error) {
+	var v SessionConfiguredEventMsg
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal EventMsg as SessionConfiguredEventMsg: %w", err)
+	}
+	return &v, nil
+}
+
+// ThreadNameUpdatedEventMsg Updated session metadata (e.g., thread name changes).
+type ThreadNameUpdatedEventMsg struct {
+	ThreadID   ThreadID `json:"thread_id"`
+	ThreadName *string  `json:"thread_name,omitempty"`
+	Type       string   `json:"type"`
+}
+
+// AsThreadNameUpdated unmarshals the union as ThreadNameUpdatedEventMsg (type="thread_name_updated").
+func (u *EventMsg) AsThreadNameUpdated() (*ThreadNameUpdatedEventMsg, error) {
+	var v ThreadNameUpdatedEventMsg
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal EventMsg as ThreadNameUpdatedEventMsg: %w", err)
+	}
+	return &v, nil
+}
+
+// MCPStartupUpdateEventMsg Incremental MCP startup progress updates.
+type MCPStartupUpdateEventMsg struct {
+	// Server name being started.
+	Server string `json:"server"`
+	// Current startup status.
+	Status json.RawMessage `json:"status"`
+	Type   string          `json:"type"`
+}
+
+// AsMcpStartupUpdate unmarshals the union as MCPStartupUpdateEventMsg (type="mcp_startup_update").
+func (u *EventMsg) AsMcpStartupUpdate() (*MCPStartupUpdateEventMsg, error) {
+	var v MCPStartupUpdateEventMsg
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal EventMsg as MCPStartupUpdateEventMsg: %w", err)
+	}
+	return &v, nil
+}
+
+// MCPStartupCompleteEventMsg Aggregate MCP startup completion summary.
+type MCPStartupCompleteEventMsg struct {
+	Cancelled []string            `json:"cancelled"`
+	Failed    []MCPStartupFailure `json:"failed"`
+	Ready     []string            `json:"ready"`
+	Type      string              `json:"type"`
+}
+
+// AsMcpStartupComplete unmarshals the union as MCPStartupCompleteEventMsg (type="mcp_startup_complete").
+func (u *EventMsg) AsMcpStartupComplete() (*MCPStartupCompleteEventMsg, error) {
+	var v MCPStartupCompleteEventMsg
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal EventMsg as MCPStartupCompleteEventMsg: %w", err)
+	}
+	return &v, nil
+}
+
+type MCPToolCallBeginEventMsg struct {
+	// Identifier so this can be paired with the McpToolCallEnd event.
+	CallID     string        `json:"call_id"`
+	Invocation MCPInvocation `json:"invocation"`
+	Type       string        `json:"type"`
+}
+
+// AsMcpToolCallBegin unmarshals the union as MCPToolCallBeginEventMsg (type="mcp_tool_call_begin").
+func (u *EventMsg) AsMcpToolCallBegin() (*MCPToolCallBeginEventMsg, error) {
+	var v MCPToolCallBeginEventMsg
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal EventMsg as MCPToolCallBeginEventMsg: %w", err)
+	}
+	return &v, nil
+}
+
+type MCPToolCallEndEventMsg struct {
+	// Identifier for the corresponding McpToolCallBegin that finished.
+	CallID     string        `json:"call_id"`
+	Duration   Duration      `json:"duration"`
+	Invocation MCPInvocation `json:"invocation"`
+	// Result of the tool call. Note this could be an error.
+	Result json.RawMessage `json:"result"`
+	Type   string          `json:"type"`
+}
+
+// AsMcpToolCallEnd unmarshals the union as MCPToolCallEndEventMsg (type="mcp_tool_call_end").
+func (u *EventMsg) AsMcpToolCallEnd() (*MCPToolCallEndEventMsg, error) {
+	var v MCPToolCallEndEventMsg
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal EventMsg as MCPToolCallEndEventMsg: %w", err)
+	}
+	return &v, nil
+}
+
+type WebSearchBeginEventMsg struct {
+	CallID string `json:"call_id"`
+	Type   string `json:"type"`
+}
+
+// AsWebSearchBegin unmarshals the union as WebSearchBeginEventMsg (type="web_search_begin").
+func (u *EventMsg) AsWebSearchBegin() (*WebSearchBeginEventMsg, error) {
+	var v WebSearchBeginEventMsg
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal EventMsg as WebSearchBeginEventMsg: %w", err)
+	}
+	return &v, nil
+}
+
+type WebSearchEndEventMsg struct {
+	Action WebSearchAction `json:"action"`
+	CallID string          `json:"call_id"`
+	Query  string          `json:"query"`
+	Type   string          `json:"type"`
+}
+
+// AsWebSearchEnd unmarshals the union as WebSearchEndEventMsg (type="web_search_end").
+func (u *EventMsg) AsWebSearchEnd() (*WebSearchEndEventMsg, error) {
+	var v WebSearchEndEventMsg
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal EventMsg as WebSearchEndEventMsg: %w", err)
+	}
+	return &v, nil
+}
+
+// ExecCommandBeginEventMsg Notification that the server is about to execute a command.
+type ExecCommandBeginEventMsg struct {
+	// Identifier so this can be paired with the ExecCommandEnd event.
+	CallID string `json:"call_id"`
+	// The command to be executed.
+	Command []string `json:"command"`
+	// The command's working directory if not the default cwd for the agent.
+	Cwd string `json:"cwd"`
+	// Raw input sent to a unified exec session (if this is an interaction event).
+	InteractionInput *string         `json:"interaction_input,omitempty"`
+	ParsedCmd        []ParsedCommand `json:"parsed_cmd"`
+	// Identifier for the underlying PTY process (when available).
+	ProcessID *string `json:"process_id,omitempty"`
+	// Where the command originated. Defaults to Agent for backward compatibility.
+	Source json.RawMessage `json:"source,omitempty"`
+	// Turn ID that this command belongs to.
+	TurnID string `json:"turn_id"`
+	Type   string `json:"type"`
+}
+
+// AsExecCommandBegin unmarshals the union as ExecCommandBeginEventMsg (type="exec_command_begin").
+func (u *EventMsg) AsExecCommandBegin() (*ExecCommandBeginEventMsg, error) {
+	var v ExecCommandBeginEventMsg
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal EventMsg as ExecCommandBeginEventMsg: %w", err)
+	}
+	return &v, nil
+}
+
+// ExecCommandOutputDeltaEventMsg Incremental chunk of output from a running command.
+type ExecCommandOutputDeltaEventMsg struct {
+	// Identifier for the ExecCommandBegin that produced this chunk.
+	CallID string `json:"call_id"`
+	// Raw bytes from the stream (may not be valid UTF-8).
+	Chunk string `json:"chunk"`
+	// Which stream produced this chunk.
+	Stream json.RawMessage `json:"stream"`
+	Type   string          `json:"type"`
+}
+
+// AsExecCommandOutputDelta unmarshals the union as ExecCommandOutputDeltaEventMsg (type="exec_command_output_delta").
+func (u *EventMsg) AsExecCommandOutputDelta() (*ExecCommandOutputDeltaEventMsg, error) {
+	var v ExecCommandOutputDeltaEventMsg
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal EventMsg as ExecCommandOutputDeltaEventMsg: %w", err)
+	}
+	return &v, nil
+}
+
+// TerminalInteractionEventMsg Terminal interaction for an in-progress command (stdin sent and stdout observed).
+type TerminalInteractionEventMsg struct {
+	// Identifier for the ExecCommandBegin that produced this chunk.
+	CallID string `json:"call_id"`
+	// Process id associated with the running command.
+	ProcessID string `json:"process_id"`
+	// Stdin sent to the running session.
+	Stdin string `json:"stdin"`
+	Type  string `json:"type"`
+}
+
+// AsTerminalInteraction unmarshals the union as TerminalInteractionEventMsg (type="terminal_interaction").
+func (u *EventMsg) AsTerminalInteraction() (*TerminalInteractionEventMsg, error) {
+	var v TerminalInteractionEventMsg
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal EventMsg as TerminalInteractionEventMsg: %w", err)
+	}
+	return &v, nil
+}
+
+type ExecCommandEndEventMsg struct {
+	// Captured aggregated output
+	AggregatedOutput *string `json:"aggregated_output,omitempty"`
+	// Identifier for the ExecCommandBegin that finished.
+	CallID string `json:"call_id"`
+	// The command that was executed.
+	Command []string `json:"command"`
+	// The command's working directory if not the default cwd for the agent.
+	Cwd string `json:"cwd"`
+	// The duration of the command execution.
+	Duration json.RawMessage `json:"duration"`
+	// The command's exit code.
+	ExitCode int64 `json:"exit_code"`
+	// Formatted output from the command, as seen by the model.
+	FormattedOutput string `json:"formatted_output"`
+	// Raw input sent to a unified exec session (if this is an interaction event).
+	InteractionInput *string         `json:"interaction_input,omitempty"`
+	ParsedCmd        []ParsedCommand `json:"parsed_cmd"`
+	// Identifier for the underlying PTY process (when available).
+	ProcessID *string `json:"process_id,omitempty"`
+	// Where the command originated. Defaults to Agent for backward compatibility.
+	Source json.RawMessage `json:"source,omitempty"`
+	// Completion status for this command execution.
+	Status json.RawMessage `json:"status"`
+	// Captured stderr
+	Stderr string `json:"stderr"`
+	// Captured stdout
+	Stdout string `json:"stdout"`
+	// Turn ID that this command belongs to.
+	TurnID string `json:"turn_id"`
+	Type   string `json:"type"`
+}
+
+// AsExecCommandEnd unmarshals the union as ExecCommandEndEventMsg (type="exec_command_end").
+func (u *EventMsg) AsExecCommandEnd() (*ExecCommandEndEventMsg, error) {
+	var v ExecCommandEndEventMsg
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal EventMsg as ExecCommandEndEventMsg: %w", err)
+	}
+	return &v, nil
+}
+
+// ViewImageToolCallEventMsg Notification that the agent attached a local image via the view_image tool.
+type ViewImageToolCallEventMsg struct {
+	// Identifier for the originating tool call.
+	CallID string `json:"call_id"`
+	// Local filesystem path provided to the tool.
+	Path string `json:"path"`
+	Type string `json:"type"`
+}
+
+// AsViewImageToolCall unmarshals the union as ViewImageToolCallEventMsg (type="view_image_tool_call").
+func (u *EventMsg) AsViewImageToolCall() (*ViewImageToolCallEventMsg, error) {
+	var v ViewImageToolCallEventMsg
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal EventMsg as ViewImageToolCallEventMsg: %w", err)
+	}
+	return &v, nil
+}
+
+type ExecApprovalRequestEventMsg struct {
+	// Optional additional filesystem permissions requested for this command.
+	AdditionalPermissions *PermissionProfile `json:"additional_permissions,omitempty"`
+	// Identifier for this specific approval callback. When absent, the approval is for the command item itself (`call_id`). This is present for subcommand approvals (via execve intercept).
+	ApprovalID *string `json:"approval_id,omitempty"`
+	// Ordered list of decisions the client may present for this prompt. When absent, clients should derive the legacy default set from the other fields on this request.
+	AvailableDecisions []ReviewDecision `json:"available_decisions,omitempty"`
+	// Identifier for the associated command execution item.
+	CallID string `json:"call_id"`
+	// The command to be executed.
+	Command []string `json:"command"`
+	// The command's working directory.
+	Cwd string `json:"cwd"`
+	// Optional network context for a blocked request that can be approved.
+	NetworkApprovalContext *NetworkApprovalContext `json:"network_approval_context,omitempty"`
+	ParsedCmd              []ParsedCommand         `json:"parsed_cmd"`
+	// Proposed execpolicy amendment that can be applied to allow future runs.
+	ProposedExecpolicyAmendment []string `json:"proposed_execpolicy_amendment,omitempty"`
+	// Proposed network policy amendments (for example allow/deny this host in future).
+	ProposedNetworkPolicyAmendments []NetworkPolicyAmendment `json:"proposed_network_policy_amendments,omitempty"`
+	// Optional human-readable reason for the approval (e.g. retry without sandbox).
+	Reason *string `json:"reason,omitempty"`
+	// Turn ID that this command belongs to. Uses `#[serde(default)]` for backwards compatibility.
+	TurnID *string `json:"turn_id,omitempty"`
+	Type   string  `json:"type"`
+}
+
+// AsExecApprovalRequest unmarshals the union as ExecApprovalRequestEventMsg (type="exec_approval_request").
+func (u *EventMsg) AsExecApprovalRequest() (*ExecApprovalRequestEventMsg, error) {
+	var v ExecApprovalRequestEventMsg
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal EventMsg as ExecApprovalRequestEventMsg: %w", err)
+	}
+	return &v, nil
+}
+
+type RequestUserInputEventMsg struct {
+	// Responses API call id for the associated tool call, if available.
+	CallID    string                     `json:"call_id"`
+	Questions []RequestUserInputQuestion `json:"questions"`
+	// Turn ID that this request belongs to. Uses `#[serde(default)]` for backwards compatibility.
+	TurnID *string `json:"turn_id,omitempty"`
+	Type   string  `json:"type"`
+}
+
+// AsRequestUserInput unmarshals the union as RequestUserInputEventMsg (type="request_user_input").
+func (u *EventMsg) AsRequestUserInput() (*RequestUserInputEventMsg, error) {
+	var v RequestUserInputEventMsg
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal EventMsg as RequestUserInputEventMsg: %w", err)
+	}
+	return &v, nil
+}
+
+type DynamicToolCallRequestEventMsg struct {
+	CallID string `json:"callId"`
+	Tool   string `json:"tool"`
+	TurnID string `json:"turnId"`
+	Type   string `json:"type"`
+}
+
+// AsDynamicToolCallRequest unmarshals the union as DynamicToolCallRequestEventMsg (type="dynamic_tool_call_request").
+func (u *EventMsg) AsDynamicToolCallRequest() (*DynamicToolCallRequestEventMsg, error) {
+	var v DynamicToolCallRequestEventMsg
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal EventMsg as DynamicToolCallRequestEventMsg: %w", err)
+	}
+	return &v, nil
+}
+
+type DynamicToolCallResponseEventMsg struct {
+	// Dynamic tool call arguments.
+	Arguments json.RawMessage `json:"arguments"`
+	// Identifier for the corresponding DynamicToolCallRequest.
+	CallID string `json:"call_id"`
+	// Dynamic tool response content items.
+	ContentItems []DynamicToolCallOutputContentItem `json:"content_items"`
+	// The duration of the dynamic tool call.
+	Duration json.RawMessage `json:"duration"`
+	// Optional error text when the tool call failed before producing a response.
+	Error *string `json:"error,omitempty"`
+	// Whether the tool call succeeded.
+	Success bool `json:"success"`
+	// Dynamic tool name.
+	Tool string `json:"tool"`
+	// Turn ID that this dynamic tool call belongs to.
+	TurnID string `json:"turn_id"`
+	Type   string `json:"type"`
+}
+
+// AsDynamicToolCallResponse unmarshals the union as DynamicToolCallResponseEventMsg (type="dynamic_tool_call_response").
+func (u *EventMsg) AsDynamicToolCallResponse() (*DynamicToolCallResponseEventMsg, error) {
+	var v DynamicToolCallResponseEventMsg
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal EventMsg as DynamicToolCallResponseEventMsg: %w", err)
+	}
+	return &v, nil
+}
+
+type ElicitationRequestEventMsg struct {
+	ID         RequestID `json:"id"`
+	Message    string    `json:"message"`
+	ServerName string    `json:"server_name"`
+	Type       string    `json:"type"`
+}
+
+// AsElicitationRequest unmarshals the union as ElicitationRequestEventMsg (type="elicitation_request").
+func (u *EventMsg) AsElicitationRequest() (*ElicitationRequestEventMsg, error) {
+	var v ElicitationRequestEventMsg
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal EventMsg as ElicitationRequestEventMsg: %w", err)
+	}
+	return &v, nil
+}
+
+type ApplyPatchApprovalRequestEventMsg struct {
+	// Responses API call id for the associated patch apply call, if available.
+	CallID  string                `json:"call_id"`
+	Changes map[string]FileChange `json:"changes"`
+	// When set, the agent is asking the user to allow writes under this root for the remainder of the session.
+	GrantRoot *string `json:"grant_root,omitempty"`
+	// Optional explanatory reason (e.g. request for extra write access).
+	Reason *string `json:"reason,omitempty"`
+	// Turn ID that this patch belongs to. Uses `#[serde(default)]` for backwards compatibility with older senders.
+	TurnID *string `json:"turn_id,omitempty"`
+	Type   string  `json:"type"`
+}
+
+// AsApplyPatchApprovalRequest unmarshals the union as ApplyPatchApprovalRequestEventMsg (type="apply_patch_approval_request").
+func (u *EventMsg) AsApplyPatchApprovalRequest() (*ApplyPatchApprovalRequestEventMsg, error) {
+	var v ApplyPatchApprovalRequestEventMsg
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal EventMsg as ApplyPatchApprovalRequestEventMsg: %w", err)
+	}
+	return &v, nil
+}
+
+// DeprecationNoticeEventMsg Notification advising the user that something they are using has been deprecated and should be phased out.
+type DeprecationNoticeEventMsg struct {
+	// Optional extra guidance, such as migration steps or rationale.
+	Details *string `json:"details,omitempty"`
+	// Concise summary of what is deprecated.
+	Summary string `json:"summary"`
+	Type    string `json:"type"`
+}
+
+// AsDeprecationNotice unmarshals the union as DeprecationNoticeEventMsg (type="deprecation_notice").
+func (u *EventMsg) AsDeprecationNotice() (*DeprecationNoticeEventMsg, error) {
+	var v DeprecationNoticeEventMsg
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal EventMsg as DeprecationNoticeEventMsg: %w", err)
+	}
+	return &v, nil
+}
+
+type BackgroundEventEventMsg struct {
+	Message string `json:"message"`
+	Type    string `json:"type"`
+}
+
+// AsBackgroundEvent unmarshals the union as BackgroundEventEventMsg (type="background_event").
+func (u *EventMsg) AsBackgroundEvent() (*BackgroundEventEventMsg, error) {
+	var v BackgroundEventEventMsg
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal EventMsg as BackgroundEventEventMsg: %w", err)
+	}
+	return &v, nil
+}
+
+type UndoStartedEventMsg struct {
+	Message *string `json:"message,omitempty"`
+	Type    string  `json:"type"`
+}
+
+// AsUndoStarted unmarshals the union as UndoStartedEventMsg (type="undo_started").
+func (u *EventMsg) AsUndoStarted() (*UndoStartedEventMsg, error) {
+	var v UndoStartedEventMsg
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal EventMsg as UndoStartedEventMsg: %w", err)
+	}
+	return &v, nil
+}
+
+type UndoCompletedEventMsg struct {
+	Message *string `json:"message,omitempty"`
+	Success bool    `json:"success"`
+	Type    string  `json:"type"`
+}
+
+// AsUndoCompleted unmarshals the union as UndoCompletedEventMsg (type="undo_completed").
+func (u *EventMsg) AsUndoCompleted() (*UndoCompletedEventMsg, error) {
+	var v UndoCompletedEventMsg
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal EventMsg as UndoCompletedEventMsg: %w", err)
+	}
+	return &v, nil
+}
+
+// StreamErrorEventMsg Notification that a model stream experienced an error or disconnect and the system is handling it (e.g., retrying with backoff).
+type StreamErrorEventMsg struct {
+	// Optional details about the underlying stream failure (often the same human-readable message that is surfaced as the terminal error if retries are exhausted).
+	AdditionalDetails *string         `json:"additional_details,omitempty"`
+	CodexErrorInfo    *CodexErrorInfo `json:"codex_error_info,omitempty"`
+	Message           string          `json:"message"`
+	Type              string          `json:"type"`
+}
+
+// AsStreamError unmarshals the union as StreamErrorEventMsg (type="stream_error").
+func (u *EventMsg) AsStreamError() (*StreamErrorEventMsg, error) {
+	var v StreamErrorEventMsg
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal EventMsg as StreamErrorEventMsg: %w", err)
+	}
+	return &v, nil
+}
+
+// PatchApplyBeginEventMsg Notification that the agent is about to apply a code patch. Mirrors `ExecCommandBegin` so front‑ends can show progress indicators.
+type PatchApplyBeginEventMsg struct {
+	// If true, there was no ApplyPatchApprovalRequest for this patch.
+	AutoApproved bool `json:"auto_approved"`
+	// Identifier so this can be paired with the PatchApplyEnd event.
+	CallID string `json:"call_id"`
+	// The changes to be applied.
+	Changes map[string]FileChange `json:"changes"`
+	// Turn ID that this patch belongs to. Uses `#[serde(default)]` for backwards compatibility.
+	TurnID *string `json:"turn_id,omitempty"`
+	Type   string  `json:"type"`
+}
+
+// AsPatchApplyBegin unmarshals the union as PatchApplyBeginEventMsg (type="patch_apply_begin").
+func (u *EventMsg) AsPatchApplyBegin() (*PatchApplyBeginEventMsg, error) {
+	var v PatchApplyBeginEventMsg
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal EventMsg as PatchApplyBeginEventMsg: %w", err)
+	}
+	return &v, nil
+}
+
+// PatchApplyEndEventMsg Notification that a patch application has finished.
+type PatchApplyEndEventMsg struct {
+	// Identifier for the PatchApplyBegin that finished.
+	CallID string `json:"call_id"`
+	// The changes that were applied (mirrors PatchApplyBeginEvent::changes).
+	Changes map[string]FileChange `json:"changes,omitempty"`
+	// Completion status for this patch application.
+	Status json.RawMessage `json:"status"`
+	// Captured stderr (parser errors, IO failures, etc.).
+	Stderr string `json:"stderr"`
+	// Captured stdout (summary printed by apply_patch).
+	Stdout string `json:"stdout"`
+	// Whether the patch was applied successfully.
+	Success bool `json:"success"`
+	// Turn ID that this patch belongs to. Uses `#[serde(default)]` for backwards compatibility.
+	TurnID *string `json:"turn_id,omitempty"`
+	Type   string  `json:"type"`
+}
+
+// AsPatchApplyEnd unmarshals the union as PatchApplyEndEventMsg (type="patch_apply_end").
+func (u *EventMsg) AsPatchApplyEnd() (*PatchApplyEndEventMsg, error) {
+	var v PatchApplyEndEventMsg
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal EventMsg as PatchApplyEndEventMsg: %w", err)
+	}
+	return &v, nil
+}
+
+type TurnDiffEventMsg struct {
+	Type        string `json:"type"`
+	UnifiedDiff string `json:"unified_diff"`
+}
+
+// AsTurnDiff unmarshals the union as TurnDiffEventMsg (type="turn_diff").
+func (u *EventMsg) AsTurnDiff() (*TurnDiffEventMsg, error) {
+	var v TurnDiffEventMsg
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal EventMsg as TurnDiffEventMsg: %w", err)
+	}
+	return &v, nil
+}
+
+// GetHistoryEntryResponseEventMsg Response to GetHistoryEntryRequest.
+type GetHistoryEntryResponseEventMsg struct {
+	// The entry at the requested offset, if available and parseable.
+	Entry  *HistoryEntry `json:"entry,omitempty"`
+	LogID  int64         `json:"log_id"`
+	Offset int64         `json:"offset"`
+	Type   string        `json:"type"`
+}
+
+// AsGetHistoryEntryResponse unmarshals the union as GetHistoryEntryResponseEventMsg (type="get_history_entry_response").
+func (u *EventMsg) AsGetHistoryEntryResponse() (*GetHistoryEntryResponseEventMsg, error) {
+	var v GetHistoryEntryResponseEventMsg
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal EventMsg as GetHistoryEntryResponseEventMsg: %w", err)
+	}
+	return &v, nil
+}
+
+// MCPListToolsResponseEventMsg List of MCP tools available to the agent.
+type MCPListToolsResponseEventMsg struct {
+	// Authentication status for each configured MCP server.
+	AuthStatuses map[string]MCPAuthStatus `json:"auth_statuses"`
+	// Known resource templates grouped by server name.
+	ResourceTemplates map[string][]ResourceTemplate `json:"resource_templates"`
+	// Known resources grouped by server name.
+	Resources map[string][]Resource `json:"resources"`
+	// Fully qualified tool name -> tool definition.
+	Tools map[string]Tool `json:"tools"`
+	Type  string          `json:"type"`
+}
+
+// AsMcpListToolsResponse unmarshals the union as MCPListToolsResponseEventMsg (type="mcp_list_tools_response").
+func (u *EventMsg) AsMcpListToolsResponse() (*MCPListToolsResponseEventMsg, error) {
+	var v MCPListToolsResponseEventMsg
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal EventMsg as MCPListToolsResponseEventMsg: %w", err)
+	}
+	return &v, nil
+}
+
+// ListCustomPromptsResponseEventMsg List of custom prompts available to the agent.
+type ListCustomPromptsResponseEventMsg struct {
+	CustomPrompts []CustomPrompt `json:"custom_prompts"`
+	Type          string         `json:"type"`
+}
+
+// AsListCustomPromptsResponse unmarshals the union as ListCustomPromptsResponseEventMsg (type="list_custom_prompts_response").
+func (u *EventMsg) AsListCustomPromptsResponse() (*ListCustomPromptsResponseEventMsg, error) {
+	var v ListCustomPromptsResponseEventMsg
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal EventMsg as ListCustomPromptsResponseEventMsg: %w", err)
+	}
+	return &v, nil
+}
+
+// ListSkillsResponseEventMsg List of skills available to the agent.
+type ListSkillsResponseEventMsg struct {
+	Skills []SkillsListEntry `json:"skills"`
+	Type   string            `json:"type"`
+}
+
+// AsListSkillsResponse unmarshals the union as ListSkillsResponseEventMsg (type="list_skills_response").
+func (u *EventMsg) AsListSkillsResponse() (*ListSkillsResponseEventMsg, error) {
+	var v ListSkillsResponseEventMsg
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal EventMsg as ListSkillsResponseEventMsg: %w", err)
+	}
+	return &v, nil
+}
+
+// ListRemoteSkillsResponseEventMsg List of remote skills available to the agent.
+type ListRemoteSkillsResponseEventMsg struct {
+	Skills []RemoteSkillSummary `json:"skills"`
+	Type   string               `json:"type"`
+}
+
+// AsListRemoteSkillsResponse unmarshals the union as ListRemoteSkillsResponseEventMsg (type="list_remote_skills_response").
+func (u *EventMsg) AsListRemoteSkillsResponse() (*ListRemoteSkillsResponseEventMsg, error) {
+	var v ListRemoteSkillsResponseEventMsg
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal EventMsg as ListRemoteSkillsResponseEventMsg: %w", err)
+	}
+	return &v, nil
+}
+
+// RemoteSkillDownloadedEventMsg Remote skill downloaded to local cache.
+type RemoteSkillDownloadedEventMsg struct {
+	ID   string `json:"id"`
+	Name string `json:"name"`
+	Path string `json:"path"`
+	Type string `json:"type"`
+}
+
+// AsRemoteSkillDownloaded unmarshals the union as RemoteSkillDownloadedEventMsg (type="remote_skill_downloaded").
+func (u *EventMsg) AsRemoteSkillDownloaded() (*RemoteSkillDownloadedEventMsg, error) {
+	var v RemoteSkillDownloadedEventMsg
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal EventMsg as RemoteSkillDownloadedEventMsg: %w", err)
+	}
+	return &v, nil
+}
+
+// SkillsUpdateAvailableEventMsg Notification that skill data may have been updated and clients may want to reload.
+type SkillsUpdateAvailableEventMsg struct {
+	Type string `json:"type"`
+}
+
+// AsSkillsUpdateAvailable unmarshals the union as SkillsUpdateAvailableEventMsg (type="skills_update_available").
+func (u *EventMsg) AsSkillsUpdateAvailable() (*SkillsUpdateAvailableEventMsg, error) {
+	var v SkillsUpdateAvailableEventMsg
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal EventMsg as SkillsUpdateAvailableEventMsg: %w", err)
+	}
+	return &v, nil
+}
+
+type PlanUpdateEventMsg struct {
+	// Arguments for the `update_plan` todo/checklist tool (not plan mode).
+	Explanation *string       `json:"explanation,omitempty"`
+	Plan        []PlanItemArg `json:"plan"`
+	Type        string        `json:"type"`
+}
+
+// AsPlanUpdate unmarshals the union as PlanUpdateEventMsg (type="plan_update").
+func (u *EventMsg) AsPlanUpdate() (*PlanUpdateEventMsg, error) {
+	var v PlanUpdateEventMsg
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal EventMsg as PlanUpdateEventMsg: %w", err)
+	}
+	return &v, nil
+}
+
+type TurnAbortedEventMsg struct {
+	Reason TurnAbortReason `json:"reason"`
+	TurnID *string         `json:"turn_id,omitempty"`
+	Type   string          `json:"type"`
+}
+
+// AsTurnAborted unmarshals the union as TurnAbortedEventMsg (type="turn_aborted").
+func (u *EventMsg) AsTurnAborted() (*TurnAbortedEventMsg, error) {
+	var v TurnAbortedEventMsg
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal EventMsg as TurnAbortedEventMsg: %w", err)
+	}
+	return &v, nil
+}
+
+// ShutdownCompleteEventMsg Notification that the agent is shutting down.
+type ShutdownCompleteEventMsg struct {
+	Type string `json:"type"`
+}
+
+// AsShutdownComplete unmarshals the union as ShutdownCompleteEventMsg (type="shutdown_complete").
+func (u *EventMsg) AsShutdownComplete() (*ShutdownCompleteEventMsg, error) {
+	var v ShutdownCompleteEventMsg
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal EventMsg as ShutdownCompleteEventMsg: %w", err)
+	}
+	return &v, nil
+}
+
+// EnteredReviewModeEventMsg Entered review mode.
+type EnteredReviewModeEventMsg struct {
+	Target         ReviewTarget `json:"target"`
+	Type           string       `json:"type"`
+	UserFacingHint *string      `json:"user_facing_hint,omitempty"`
+}
+
+// AsEnteredReviewMode unmarshals the union as EnteredReviewModeEventMsg (type="entered_review_mode").
+func (u *EventMsg) AsEnteredReviewMode() (*EnteredReviewModeEventMsg, error) {
+	var v EnteredReviewModeEventMsg
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal EventMsg as EnteredReviewModeEventMsg: %w", err)
+	}
+	return &v, nil
+}
+
+// ExitedReviewModeEventMsg Exited review mode with an optional final result to apply.
+type ExitedReviewModeEventMsg struct {
+	ReviewOutput *ReviewOutputEvent `json:"review_output,omitempty"`
+	Type         string             `json:"type"`
+}
+
+// AsExitedReviewMode unmarshals the union as ExitedReviewModeEventMsg (type="exited_review_mode").
+func (u *EventMsg) AsExitedReviewMode() (*ExitedReviewModeEventMsg, error) {
+	var v ExitedReviewModeEventMsg
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal EventMsg as ExitedReviewModeEventMsg: %w", err)
+	}
+	return &v, nil
+}
+
+type RawResponseItemEventMsg struct {
+	Item ResponseItem `json:"item"`
+	Type string       `json:"type"`
+}
+
+// AsRawResponseItem unmarshals the union as RawResponseItemEventMsg (type="raw_response_item").
+func (u *EventMsg) AsRawResponseItem() (*RawResponseItemEventMsg, error) {
+	var v RawResponseItemEventMsg
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal EventMsg as RawResponseItemEventMsg: %w", err)
+	}
+	return &v, nil
+}
+
+type ItemStartedEventMsg struct {
+	Item     TurnItem `json:"item"`
+	ThreadID ThreadID `json:"thread_id"`
+	TurnID   string   `json:"turn_id"`
+	Type     string   `json:"type"`
+}
+
+// AsItemStarted unmarshals the union as ItemStartedEventMsg (type="item_started").
+func (u *EventMsg) AsItemStarted() (*ItemStartedEventMsg, error) {
+	var v ItemStartedEventMsg
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal EventMsg as ItemStartedEventMsg: %w", err)
+	}
+	return &v, nil
+}
+
+type ItemCompletedEventMsg struct {
+	Item     TurnItem `json:"item"`
+	ThreadID ThreadID `json:"thread_id"`
+	TurnID   string   `json:"turn_id"`
+	Type     string   `json:"type"`
+}
+
+// AsItemCompleted unmarshals the union as ItemCompletedEventMsg (type="item_completed").
+func (u *EventMsg) AsItemCompleted() (*ItemCompletedEventMsg, error) {
+	var v ItemCompletedEventMsg
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal EventMsg as ItemCompletedEventMsg: %w", err)
+	}
+	return &v, nil
+}
+
+type AgentMessageContentDeltaEventMsg struct {
+	Delta    string `json:"delta"`
+	ItemID   string `json:"item_id"`
+	ThreadID string `json:"thread_id"`
+	TurnID   string `json:"turn_id"`
+	Type     string `json:"type"`
+}
+
+// AsAgentMessageContentDelta unmarshals the union as AgentMessageContentDeltaEventMsg (type="agent_message_content_delta").
+func (u *EventMsg) AsAgentMessageContentDelta() (*AgentMessageContentDeltaEventMsg, error) {
+	var v AgentMessageContentDeltaEventMsg
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal EventMsg as AgentMessageContentDeltaEventMsg: %w", err)
+	}
+	return &v, nil
+}
+
+type PlanDeltaEventMsg struct {
+	Delta    string `json:"delta"`
+	ItemID   string `json:"item_id"`
+	ThreadID string `json:"thread_id"`
+	TurnID   string `json:"turn_id"`
+	Type     string `json:"type"`
+}
+
+// AsPlanDelta unmarshals the union as PlanDeltaEventMsg (type="plan_delta").
+func (u *EventMsg) AsPlanDelta() (*PlanDeltaEventMsg, error) {
+	var v PlanDeltaEventMsg
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal EventMsg as PlanDeltaEventMsg: %w", err)
+	}
+	return &v, nil
+}
+
+type ReasoningContentDeltaEventMsg struct {
+	Delta        string `json:"delta"`
+	ItemID       string `json:"item_id"`
+	SummaryIndex *int64 `json:"summary_index,omitempty"`
+	ThreadID     string `json:"thread_id"`
+	TurnID       string `json:"turn_id"`
+	Type         string `json:"type"`
+}
+
+// AsReasoningContentDelta unmarshals the union as ReasoningContentDeltaEventMsg (type="reasoning_content_delta").
+func (u *EventMsg) AsReasoningContentDelta() (*ReasoningContentDeltaEventMsg, error) {
+	var v ReasoningContentDeltaEventMsg
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal EventMsg as ReasoningContentDeltaEventMsg: %w", err)
+	}
+	return &v, nil
+}
+
+type ReasoningRawContentDeltaEventMsg struct {
+	ContentIndex *int64 `json:"content_index,omitempty"`
+	Delta        string `json:"delta"`
+	ItemID       string `json:"item_id"`
+	ThreadID     string `json:"thread_id"`
+	TurnID       string `json:"turn_id"`
+	Type         string `json:"type"`
+}
+
+// AsReasoningRawContentDelta unmarshals the union as ReasoningRawContentDeltaEventMsg (type="reasoning_raw_content_delta").
+func (u *EventMsg) AsReasoningRawContentDelta() (*ReasoningRawContentDeltaEventMsg, error) {
+	var v ReasoningRawContentDeltaEventMsg
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal EventMsg as ReasoningRawContentDeltaEventMsg: %w", err)
+	}
+	return &v, nil
+}
+
+// CollabAgentSpawnBeginEventMsg Collab interaction: agent spawn begin.
+type CollabAgentSpawnBeginEventMsg struct {
+	// Identifier for the collab tool call.
+	CallID string `json:"call_id"`
+	// Initial prompt sent to the agent. Can be empty to prevent CoT leaking at the beginning.
+	Prompt string `json:"prompt"`
+	// Thread ID of the sender.
+	SenderThreadID json.RawMessage `json:"sender_thread_id"`
+	Type           string          `json:"type"`
+}
+
+// AsCollabAgentSpawnBegin unmarshals the union as CollabAgentSpawnBeginEventMsg (type="collab_agent_spawn_begin").
+func (u *EventMsg) AsCollabAgentSpawnBegin() (*CollabAgentSpawnBeginEventMsg, error) {
+	var v CollabAgentSpawnBeginEventMsg
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal EventMsg as CollabAgentSpawnBeginEventMsg: %w", err)
+	}
+	return &v, nil
+}
+
+// CollabAgentSpawnEndEventMsg Collab interaction: agent spawn end.
+type CollabAgentSpawnEndEventMsg struct {
+	// Identifier for the collab tool call.
+	CallID string `json:"call_id"`
+	// Optional nickname assigned to the new agent.
+	NewAgentNickname *string `json:"new_agent_nickname,omitempty"`
+	// Optional role assigned to the new agent.
+	NewAgentRole *string `json:"new_agent_role,omitempty"`
+	// Thread ID of the newly spawned agent, if it was created.
+	NewThreadID *ThreadID `json:"new_thread_id,omitempty"`
+	// Initial prompt sent to the agent. Can be empty to prevent CoT leaking at the beginning.
+	Prompt string `json:"prompt"`
+	// Thread ID of the sender.
+	SenderThreadID json.RawMessage `json:"sender_thread_id"`
+	// Last known status of the new agent reported to the sender agent.
+	Status json.RawMessage `json:"status"`
+	Type   string          `json:"type"`
+}
+
+// AsCollabAgentSpawnEnd unmarshals the union as CollabAgentSpawnEndEventMsg (type="collab_agent_spawn_end").
+func (u *EventMsg) AsCollabAgentSpawnEnd() (*CollabAgentSpawnEndEventMsg, error) {
+	var v CollabAgentSpawnEndEventMsg
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal EventMsg as CollabAgentSpawnEndEventMsg: %w", err)
+	}
+	return &v, nil
+}
+
+// CollabAgentInteractionBeginEventMsg Collab interaction: agent interaction begin.
+type CollabAgentInteractionBeginEventMsg struct {
+	// Identifier for the collab tool call.
+	CallID string `json:"call_id"`
+	// Prompt sent from the sender to the receiver. Can be empty to prevent CoT leaking at the beginning.
+	Prompt string `json:"prompt"`
+	// Thread ID of the receiver.
+	ReceiverThreadID json.RawMessage `json:"receiver_thread_id"`
+	// Thread ID of the sender.
+	SenderThreadID json.RawMessage `json:"sender_thread_id"`
+	Type           string          `json:"type"`
+}
+
+// AsCollabAgentInteractionBegin unmarshals the union as CollabAgentInteractionBeginEventMsg (type="collab_agent_interaction_begin").
+func (u *EventMsg) AsCollabAgentInteractionBegin() (*CollabAgentInteractionBeginEventMsg, error) {
+	var v CollabAgentInteractionBeginEventMsg
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal EventMsg as CollabAgentInteractionBeginEventMsg: %w", err)
+	}
+	return &v, nil
+}
+
+// CollabAgentInteractionEndEventMsg Collab interaction: agent interaction end.
+type CollabAgentInteractionEndEventMsg struct {
+	// Identifier for the collab tool call.
+	CallID string `json:"call_id"`
+	// Prompt sent from the sender to the receiver. Can be empty to prevent CoT leaking at the beginning.
+	Prompt string `json:"prompt"`
+	// Optional nickname assigned to the receiver agent.
+	ReceiverAgentNickname *string `json:"receiver_agent_nickname,omitempty"`
+	// Optional role assigned to the receiver agent.
+	ReceiverAgentRole *string `json:"receiver_agent_role,omitempty"`
+	// Thread ID of the receiver.
+	ReceiverThreadID json.RawMessage `json:"receiver_thread_id"`
+	// Thread ID of the sender.
+	SenderThreadID json.RawMessage `json:"sender_thread_id"`
+	// Last known status of the receiver agent reported to the sender agent.
+	Status json.RawMessage `json:"status"`
+	Type   string          `json:"type"`
+}
+
+// AsCollabAgentInteractionEnd unmarshals the union as CollabAgentInteractionEndEventMsg (type="collab_agent_interaction_end").
+func (u *EventMsg) AsCollabAgentInteractionEnd() (*CollabAgentInteractionEndEventMsg, error) {
+	var v CollabAgentInteractionEndEventMsg
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal EventMsg as CollabAgentInteractionEndEventMsg: %w", err)
+	}
+	return &v, nil
+}
+
+// CollabWaitingBeginEventMsg Collab interaction: waiting begin.
+type CollabWaitingBeginEventMsg struct {
+	// ID of the waiting call.
+	CallID string `json:"call_id"`
+	// Optional nicknames/roles for receivers.
+	ReceiverAgents []CollabAgentRef `json:"receiver_agents,omitempty"`
+	// Thread ID of the receivers.
+	ReceiverThreadIds []ThreadID `json:"receiver_thread_ids"`
+	// Thread ID of the sender.
+	SenderThreadID json.RawMessage `json:"sender_thread_id"`
+	Type           string          `json:"type"`
+}
+
+// AsCollabWaitingBegin unmarshals the union as CollabWaitingBeginEventMsg (type="collab_waiting_begin").
+func (u *EventMsg) AsCollabWaitingBegin() (*CollabWaitingBeginEventMsg, error) {
+	var v CollabWaitingBeginEventMsg
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal EventMsg as CollabWaitingBeginEventMsg: %w", err)
+	}
+	return &v, nil
+}
+
+// CollabWaitingEndEventMsg Collab interaction: waiting end.
+type CollabWaitingEndEventMsg struct {
+	// Optional receiver metadata paired with final statuses.
+	AgentStatuses []CollabAgentStatusEntry `json:"agent_statuses,omitempty"`
+	// ID of the waiting call.
+	CallID string `json:"call_id"`
+	// Thread ID of the sender.
+	SenderThreadID json.RawMessage `json:"sender_thread_id"`
+	// Last known status of the receiver agents reported to the sender agent.
+	Statuses map[string]AgentStatus `json:"statuses"`
+	Type     string                 `json:"type"`
+}
+
+// AsCollabWaitingEnd unmarshals the union as CollabWaitingEndEventMsg (type="collab_waiting_end").
+func (u *EventMsg) AsCollabWaitingEnd() (*CollabWaitingEndEventMsg, error) {
+	var v CollabWaitingEndEventMsg
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal EventMsg as CollabWaitingEndEventMsg: %w", err)
+	}
+	return &v, nil
+}
+
+// CollabCloseBeginEventMsg Collab interaction: close begin.
+type CollabCloseBeginEventMsg struct {
+	// Identifier for the collab tool call.
+	CallID string `json:"call_id"`
+	// Thread ID of the receiver.
+	ReceiverThreadID json.RawMessage `json:"receiver_thread_id"`
+	// Thread ID of the sender.
+	SenderThreadID json.RawMessage `json:"sender_thread_id"`
+	Type           string          `json:"type"`
+}
+
+// AsCollabCloseBegin unmarshals the union as CollabCloseBeginEventMsg (type="collab_close_begin").
+func (u *EventMsg) AsCollabCloseBegin() (*CollabCloseBeginEventMsg, error) {
+	var v CollabCloseBeginEventMsg
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal EventMsg as CollabCloseBeginEventMsg: %w", err)
+	}
+	return &v, nil
+}
+
+// CollabCloseEndEventMsg Collab interaction: close end.
+type CollabCloseEndEventMsg struct {
+	// Identifier for the collab tool call.
+	CallID string `json:"call_id"`
+	// Optional nickname assigned to the receiver agent.
+	ReceiverAgentNickname *string `json:"receiver_agent_nickname,omitempty"`
+	// Optional role assigned to the receiver agent.
+	ReceiverAgentRole *string `json:"receiver_agent_role,omitempty"`
+	// Thread ID of the receiver.
+	ReceiverThreadID json.RawMessage `json:"receiver_thread_id"`
+	// Thread ID of the sender.
+	SenderThreadID json.RawMessage `json:"sender_thread_id"`
+	// Last known status of the receiver agent reported to the sender agent before the close.
+	Status json.RawMessage `json:"status"`
+	Type   string          `json:"type"`
+}
+
+// AsCollabCloseEnd unmarshals the union as CollabCloseEndEventMsg (type="collab_close_end").
+func (u *EventMsg) AsCollabCloseEnd() (*CollabCloseEndEventMsg, error) {
+	var v CollabCloseEndEventMsg
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal EventMsg as CollabCloseEndEventMsg: %w", err)
+	}
+	return &v, nil
+}
+
+// CollabResumeBeginEventMsg Collab interaction: resume begin.
+type CollabResumeBeginEventMsg struct {
+	// Identifier for the collab tool call.
+	CallID string `json:"call_id"`
+	// Optional nickname assigned to the receiver agent.
+	ReceiverAgentNickname *string `json:"receiver_agent_nickname,omitempty"`
+	// Optional role assigned to the receiver agent.
+	ReceiverAgentRole *string `json:"receiver_agent_role,omitempty"`
+	// Thread ID of the receiver.
+	ReceiverThreadID json.RawMessage `json:"receiver_thread_id"`
+	// Thread ID of the sender.
+	SenderThreadID json.RawMessage `json:"sender_thread_id"`
+	Type           string          `json:"type"`
+}
+
+// AsCollabResumeBegin unmarshals the union as CollabResumeBeginEventMsg (type="collab_resume_begin").
+func (u *EventMsg) AsCollabResumeBegin() (*CollabResumeBeginEventMsg, error) {
+	var v CollabResumeBeginEventMsg
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal EventMsg as CollabResumeBeginEventMsg: %w", err)
+	}
+	return &v, nil
+}
+
+// CollabResumeEndEventMsg Collab interaction: resume end.
+type CollabResumeEndEventMsg struct {
+	// Identifier for the collab tool call.
+	CallID string `json:"call_id"`
+	// Optional nickname assigned to the receiver agent.
+	ReceiverAgentNickname *string `json:"receiver_agent_nickname,omitempty"`
+	// Optional role assigned to the receiver agent.
+	ReceiverAgentRole *string `json:"receiver_agent_role,omitempty"`
+	// Thread ID of the receiver.
+	ReceiverThreadID json.RawMessage `json:"receiver_thread_id"`
+	// Thread ID of the sender.
+	SenderThreadID json.RawMessage `json:"sender_thread_id"`
+	// Last known status of the receiver agent reported to the sender agent after resume.
+	Status json.RawMessage `json:"status"`
+	Type   string          `json:"type"`
+}
+
+// AsCollabResumeEnd unmarshals the union as CollabResumeEndEventMsg (type="collab_resume_end").
+func (u *EventMsg) AsCollabResumeEnd() (*CollabResumeEndEventMsg, error) {
+	var v CollabResumeEndEventMsg
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal EventMsg as CollabResumeEndEventMsg: %w", err)
+	}
+	return &v, nil
+}
+
+type FileChange struct {
+	Type string          `json:"type"`
+	Data json.RawMessage `json:"-"`
+}
+
+func (u *FileChange) UnmarshalJSON(data []byte) error {
+	var disc struct {
+		Type string `json:"type"`
+	}
+	if err := json.Unmarshal(data, &disc); err != nil {
+		return err
+	}
+	u.Type = disc.Type
+	u.Data = append(u.Data[:0], data...)
+	return nil
+}
+
+func (u FileChange) MarshalJSON() ([]byte, error) {
+	if u.Data != nil {
+		return []byte(u.Data), nil
+	}
+	return json.Marshal(struct {
+		Type string `json:"type"`
+	}{Type: u.Type})
+}
+
+// FileChange type discriminator values.
+const (
+	FileChangeTypeAdd    = "add"
+	FileChangeTypeDelete = "delete"
+	FileChangeTypeUpdate = "update"
+)
+
+type AddFileChange struct {
+	Content string `json:"content"`
+	Type    string `json:"type"`
+}
+
+// AsAdd unmarshals the union as AddFileChange (type="add").
+func (u *FileChange) AsAdd() (*AddFileChange, error) {
+	var v AddFileChange
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal FileChange as AddFileChange: %w", err)
+	}
+	return &v, nil
+}
+
+type DeleteFileChange struct {
+	Content string `json:"content"`
+	Type    string `json:"type"`
+}
+
+// AsDelete unmarshals the union as DeleteFileChange (type="delete").
+func (u *FileChange) AsDelete() (*DeleteFileChange, error) {
+	var v DeleteFileChange
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal FileChange as DeleteFileChange: %w", err)
+	}
+	return &v, nil
+}
+
+type UpdateFileChange struct {
+	MovePath    *string `json:"move_path,omitempty"`
+	Type        string  `json:"type"`
+	UnifiedDiff string  `json:"unified_diff"`
+}
+
+// AsUpdate unmarshals the union as UpdateFileChange (type="update").
+func (u *FileChange) AsUpdate() (*UpdateFileChange, error) {
+	var v UpdateFileChange
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal FileChange as UpdateFileChange: %w", err)
+	}
+	return &v, nil
+}
+
+type ParsedCommand struct {
+	Type string          `json:"type"`
+	Data json.RawMessage `json:"-"`
+}
+
+func (u *ParsedCommand) UnmarshalJSON(data []byte) error {
+	var disc struct {
+		Type string `json:"type"`
+	}
+	if err := json.Unmarshal(data, &disc); err != nil {
+		return err
+	}
+	u.Type = disc.Type
+	u.Data = append(u.Data[:0], data...)
+	return nil
+}
+
+func (u ParsedCommand) MarshalJSON() ([]byte, error) {
+	if u.Data != nil {
+		return []byte(u.Data), nil
+	}
+	return json.Marshal(struct {
+		Type string `json:"type"`
+	}{Type: u.Type})
+}
+
+// ParsedCommand type discriminator values.
+const (
+	ParsedCommandTypeRead      = "read"
+	ParsedCommandTypeListFiles = "list_files"
+	ParsedCommandTypeSearch    = "search"
+	ParsedCommandTypeUnknown   = "unknown"
+)
+
+type ReadParsedCommand struct {
+	Cmd  string `json:"cmd"`
+	Name string `json:"name"`
+	// (Best effort) Path to the file being read by the command. When possible, this is an absolute path, though when relative, it should be resolved against the `cwd`` that will be used to run the command to derive the absolute path.
+	Path string `json:"path"`
+	Type string `json:"type"`
+}
+
+// AsRead unmarshals the union as ReadParsedCommand (type="read").
+func (u *ParsedCommand) AsRead() (*ReadParsedCommand, error) {
+	var v ReadParsedCommand
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal ParsedCommand as ReadParsedCommand: %w", err)
+	}
+	return &v, nil
+}
+
+type ListFilesParsedCommand struct {
+	Cmd  string  `json:"cmd"`
+	Path *string `json:"path,omitempty"`
+	Type string  `json:"type"`
+}
+
+// AsListFiles unmarshals the union as ListFilesParsedCommand (type="list_files").
+func (u *ParsedCommand) AsListFiles() (*ListFilesParsedCommand, error) {
+	var v ListFilesParsedCommand
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal ParsedCommand as ListFilesParsedCommand: %w", err)
+	}
+	return &v, nil
+}
+
+type SearchParsedCommand struct {
+	Cmd   string  `json:"cmd"`
+	Path  *string `json:"path,omitempty"`
+	Query *string `json:"query,omitempty"`
+	Type  string  `json:"type"`
+}
+
+// AsSearch unmarshals the union as SearchParsedCommand (type="search").
+func (u *ParsedCommand) AsSearch() (*SearchParsedCommand, error) {
+	var v SearchParsedCommand
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal ParsedCommand as SearchParsedCommand: %w", err)
+	}
+	return &v, nil
+}
+
+type UnknownParsedCommand struct {
+	Cmd  string `json:"cmd"`
+	Type string `json:"type"`
+}
+
+// AsUnknown unmarshals the union as UnknownParsedCommand (type="unknown").
+func (u *ParsedCommand) AsUnknown() (*UnknownParsedCommand, error) {
+	var v UnknownParsedCommand
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal ParsedCommand as UnknownParsedCommand: %w", err)
 	}
 	return &v, nil
 }
@@ -810,6 +2544,2058 @@ func (m *ServerRequest) ExecCommandApprovalParams() (*ExecCommandApprovalParams,
 	var v ExecCommandApprovalParams
 	if err := json.Unmarshal(m.Params, &v); err != nil {
 		return nil, fmt.Errorf("unmarshal execCommandApproval params: %w", err)
+	}
+	return &v, nil
+}
+
+type TurnItem struct {
+	Type string          `json:"type"`
+	Data json.RawMessage `json:"-"`
+}
+
+func (u *TurnItem) UnmarshalJSON(data []byte) error {
+	var disc struct {
+		Type string `json:"type"`
+	}
+	if err := json.Unmarshal(data, &disc); err != nil {
+		return err
+	}
+	u.Type = disc.Type
+	u.Data = append(u.Data[:0], data...)
+	return nil
+}
+
+func (u TurnItem) MarshalJSON() ([]byte, error) {
+	if u.Data != nil {
+		return []byte(u.Data), nil
+	}
+	return json.Marshal(struct {
+		Type string `json:"type"`
+	}{Type: u.Type})
+}
+
+// TurnItem type discriminator values.
+const (
+	TurnItemTypeUserMessage       = "UserMessage"
+	TurnItemTypeAgentMessage      = "AgentMessage"
+	TurnItemTypePlan              = "Plan"
+	TurnItemTypeReasoning         = "Reasoning"
+	TurnItemTypeWebSearch         = "WebSearch"
+	TurnItemTypeContextCompaction = "ContextCompaction"
+)
+
+type UserMessageTurnItem struct {
+	Content []UserInput `json:"content"`
+	ID      string      `json:"id"`
+	Type    string      `json:"type"`
+}
+
+// AsUserMessage unmarshals the union as UserMessageTurnItem (type="UserMessage").
+func (u *TurnItem) AsUserMessage() (*UserMessageTurnItem, error) {
+	var v UserMessageTurnItem
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal TurnItem as UserMessageTurnItem: %w", err)
+	}
+	return &v, nil
+}
+
+// AgentMessageTurnItem Assistant-authored message payload used in turn-item streams. `phase` is optional because not all providers/models emit it. Consumers should use it when present, but retain legacy completion semantics when it is `None`.
+type AgentMessageTurnItem struct {
+	Content []AgentMessageContent `json:"content"`
+	ID      string                `json:"id"`
+	// Optional phase metadata carried through from `ResponseItem::Message`. This is currently used by TUI rendering to distinguish mid-turn commentary from a final answer and avoid status-indicator jitter.
+	Phase *MessagePhase `json:"phase,omitempty"`
+	Type  string        `json:"type"`
+}
+
+// AsAgentMessage unmarshals the union as AgentMessageTurnItem (type="AgentMessage").
+func (u *TurnItem) AsAgentMessage() (*AgentMessageTurnItem, error) {
+	var v AgentMessageTurnItem
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal TurnItem as AgentMessageTurnItem: %w", err)
+	}
+	return &v, nil
+}
+
+type PlanTurnItem struct {
+	ID   string `json:"id"`
+	Text string `json:"text"`
+	Type string `json:"type"`
+}
+
+// AsPlan unmarshals the union as PlanTurnItem (type="Plan").
+func (u *TurnItem) AsPlan() (*PlanTurnItem, error) {
+	var v PlanTurnItem
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal TurnItem as PlanTurnItem: %w", err)
+	}
+	return &v, nil
+}
+
+type ReasoningTurnItem struct {
+	ID          string   `json:"id"`
+	RawContent  []string `json:"raw_content,omitempty"`
+	SummaryText []string `json:"summary_text"`
+	Type        string   `json:"type"`
+}
+
+// AsReasoning unmarshals the union as ReasoningTurnItem (type="Reasoning").
+func (u *TurnItem) AsReasoning() (*ReasoningTurnItem, error) {
+	var v ReasoningTurnItem
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal TurnItem as ReasoningTurnItem: %w", err)
+	}
+	return &v, nil
+}
+
+type WebSearchTurnItem struct {
+	Action WebSearchAction `json:"action"`
+	ID     string          `json:"id"`
+	Query  string          `json:"query"`
+	Type   string          `json:"type"`
+}
+
+// AsWebSearch unmarshals the union as WebSearchTurnItem (type="WebSearch").
+func (u *TurnItem) AsWebSearch() (*WebSearchTurnItem, error) {
+	var v WebSearchTurnItem
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal TurnItem as WebSearchTurnItem: %w", err)
+	}
+	return &v, nil
+}
+
+type ContextCompactionTurnItem struct {
+	ID   string `json:"id"`
+	Type string `json:"type"`
+}
+
+// AsContextCompaction unmarshals the union as ContextCompactionTurnItem (type="ContextCompaction").
+func (u *TurnItem) AsContextCompaction() (*ContextCompactionTurnItem, error) {
+	var v ContextCompactionTurnItem
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal TurnItem as ContextCompactionTurnItem: %w", err)
+	}
+	return &v, nil
+}
+
+type Account struct {
+	Type string          `json:"type"`
+	Data json.RawMessage `json:"-"`
+}
+
+func (u *Account) UnmarshalJSON(data []byte) error {
+	var disc struct {
+		Type string `json:"type"`
+	}
+	if err := json.Unmarshal(data, &disc); err != nil {
+		return err
+	}
+	u.Type = disc.Type
+	u.Data = append(u.Data[:0], data...)
+	return nil
+}
+
+func (u Account) MarshalJSON() ([]byte, error) {
+	if u.Data != nil {
+		return []byte(u.Data), nil
+	}
+	return json.Marshal(struct {
+		Type string `json:"type"`
+	}{Type: u.Type})
+}
+
+// Account type discriminator values.
+const (
+	AccountTypeApiKey  = "apiKey"
+	AccountTypeChatgpt = "chatgpt"
+)
+
+type APIKeyAccount struct {
+	Type string `json:"type"`
+}
+
+// AsApiKey unmarshals the union as APIKeyAccount (type="apiKey").
+func (u *Account) AsApiKey() (*APIKeyAccount, error) {
+	var v APIKeyAccount
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal Account as APIKeyAccount: %w", err)
+	}
+	return &v, nil
+}
+
+type ChatgptAccount struct {
+	Email    string   `json:"email"`
+	PlanType PlanType `json:"planType"`
+	Type     string   `json:"type"`
+}
+
+// AsChatgpt unmarshals the union as ChatgptAccount (type="chatgpt").
+func (u *Account) AsChatgpt() (*ChatgptAccount, error) {
+	var v ChatgptAccount
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal Account as ChatgptAccount: %w", err)
+	}
+	return &v, nil
+}
+
+type CommandAction struct {
+	Type string          `json:"type"`
+	Data json.RawMessage `json:"-"`
+}
+
+func (u *CommandAction) UnmarshalJSON(data []byte) error {
+	var disc struct {
+		Type string `json:"type"`
+	}
+	if err := json.Unmarshal(data, &disc); err != nil {
+		return err
+	}
+	u.Type = disc.Type
+	u.Data = append(u.Data[:0], data...)
+	return nil
+}
+
+func (u CommandAction) MarshalJSON() ([]byte, error) {
+	if u.Data != nil {
+		return []byte(u.Data), nil
+	}
+	return json.Marshal(struct {
+		Type string `json:"type"`
+	}{Type: u.Type})
+}
+
+// CommandAction type discriminator values.
+const (
+	CommandActionTypeRead      = "read"
+	CommandActionTypeListFiles = "listFiles"
+	CommandActionTypeSearch    = "search"
+	CommandActionTypeUnknown   = "unknown"
+)
+
+type ReadCommandAction struct {
+	Command string `json:"command"`
+	Name    string `json:"name"`
+	Path    string `json:"path"`
+	Type    string `json:"type"`
+}
+
+// AsRead unmarshals the union as ReadCommandAction (type="read").
+func (u *CommandAction) AsRead() (*ReadCommandAction, error) {
+	var v ReadCommandAction
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal CommandAction as ReadCommandAction: %w", err)
+	}
+	return &v, nil
+}
+
+type ListFilesCommandAction struct {
+	Command string  `json:"command"`
+	Path    *string `json:"path,omitempty"`
+	Type    string  `json:"type"`
+}
+
+// AsListFiles unmarshals the union as ListFilesCommandAction (type="listFiles").
+func (u *CommandAction) AsListFiles() (*ListFilesCommandAction, error) {
+	var v ListFilesCommandAction
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal CommandAction as ListFilesCommandAction: %w", err)
+	}
+	return &v, nil
+}
+
+type SearchCommandAction struct {
+	Command string  `json:"command"`
+	Path    *string `json:"path,omitempty"`
+	Query   *string `json:"query,omitempty"`
+	Type    string  `json:"type"`
+}
+
+// AsSearch unmarshals the union as SearchCommandAction (type="search").
+func (u *CommandAction) AsSearch() (*SearchCommandAction, error) {
+	var v SearchCommandAction
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal CommandAction as SearchCommandAction: %w", err)
+	}
+	return &v, nil
+}
+
+type UnknownCommandAction struct {
+	Command string `json:"command"`
+	Type    string `json:"type"`
+}
+
+// AsUnknown unmarshals the union as UnknownCommandAction (type="unknown").
+func (u *CommandAction) AsUnknown() (*UnknownCommandAction, error) {
+	var v UnknownCommandAction
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal CommandAction as UnknownCommandAction: %w", err)
+	}
+	return &v, nil
+}
+
+type ConfigLayerSource struct {
+	Type string          `json:"type"`
+	Data json.RawMessage `json:"-"`
+}
+
+func (u *ConfigLayerSource) UnmarshalJSON(data []byte) error {
+	var disc struct {
+		Type string `json:"type"`
+	}
+	if err := json.Unmarshal(data, &disc); err != nil {
+		return err
+	}
+	u.Type = disc.Type
+	u.Data = append(u.Data[:0], data...)
+	return nil
+}
+
+func (u ConfigLayerSource) MarshalJSON() ([]byte, error) {
+	if u.Data != nil {
+		return []byte(u.Data), nil
+	}
+	return json.Marshal(struct {
+		Type string `json:"type"`
+	}{Type: u.Type})
+}
+
+// ConfigLayerSource type discriminator values.
+const (
+	ConfigLayerSourceTypeMdm                             = "mdm"
+	ConfigLayerSourceTypeSystem                          = "system"
+	ConfigLayerSourceTypeUser                            = "user"
+	ConfigLayerSourceTypeProject                         = "project"
+	ConfigLayerSourceTypeSessionFlags                    = "sessionFlags"
+	ConfigLayerSourceTypeLegacyManagedConfigTomlFromFile = "legacyManagedConfigTomlFromFile"
+	ConfigLayerSourceTypeLegacyManagedConfigTomlFromMdm  = "legacyManagedConfigTomlFromMdm"
+)
+
+// MdmConfigLayerSource Managed preferences layer delivered by MDM (macOS only).
+type MdmConfigLayerSource struct {
+	Domain string `json:"domain"`
+	Key    string `json:"key"`
+	Type   string `json:"type"`
+}
+
+// AsMdm unmarshals the union as MdmConfigLayerSource (type="mdm").
+func (u *ConfigLayerSource) AsMdm() (*MdmConfigLayerSource, error) {
+	var v MdmConfigLayerSource
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal ConfigLayerSource as MdmConfigLayerSource: %w", err)
+	}
+	return &v, nil
+}
+
+// SystemConfigLayerSource Managed config layer from a file (usually `managed_config.toml`).
+type SystemConfigLayerSource struct {
+	// This is the path to the system config.toml file, though it is not guaranteed to exist.
+	File json.RawMessage `json:"file"`
+	Type string          `json:"type"`
+}
+
+// AsSystem unmarshals the union as SystemConfigLayerSource (type="system").
+func (u *ConfigLayerSource) AsSystem() (*SystemConfigLayerSource, error) {
+	var v SystemConfigLayerSource
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal ConfigLayerSource as SystemConfigLayerSource: %w", err)
+	}
+	return &v, nil
+}
+
+// UserConfigLayerSource User config layer from $CODEX_HOME/config.toml. This layer is special in that it is expected to be: - writable by the user - generally outside the workspace directory
+type UserConfigLayerSource struct {
+	// This is the path to the user's config.toml file, though it is not guaranteed to exist.
+	File json.RawMessage `json:"file"`
+	Type string          `json:"type"`
+}
+
+// AsUser unmarshals the union as UserConfigLayerSource (type="user").
+func (u *ConfigLayerSource) AsUser() (*UserConfigLayerSource, error) {
+	var v UserConfigLayerSource
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal ConfigLayerSource as UserConfigLayerSource: %w", err)
+	}
+	return &v, nil
+}
+
+// ProjectConfigLayerSource Path to a .codex/ folder within a project. There could be multiple of these between `cwd` and the project/repo root.
+type ProjectConfigLayerSource struct {
+	DotCodexFolder AbsolutePathBuf `json:"dotCodexFolder"`
+	Type           string          `json:"type"`
+}
+
+// AsProject unmarshals the union as ProjectConfigLayerSource (type="project").
+func (u *ConfigLayerSource) AsProject() (*ProjectConfigLayerSource, error) {
+	var v ProjectConfigLayerSource
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal ConfigLayerSource as ProjectConfigLayerSource: %w", err)
+	}
+	return &v, nil
+}
+
+// SessionFlagsConfigLayerSource Session-layer overrides supplied via `-c`/`--config`.
+type SessionFlagsConfigLayerSource struct {
+	Type string `json:"type"`
+}
+
+// AsSessionFlags unmarshals the union as SessionFlagsConfigLayerSource (type="sessionFlags").
+func (u *ConfigLayerSource) AsSessionFlags() (*SessionFlagsConfigLayerSource, error) {
+	var v SessionFlagsConfigLayerSource
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal ConfigLayerSource as SessionFlagsConfigLayerSource: %w", err)
+	}
+	return &v, nil
+}
+
+// LegacyManagedConfigTomlFromFileConfigLayerSource `managed_config.toml` was designed to be a config that was loaded as the last layer on top of everything else. This scheme did not quite work out as intended, but we keep this variant as a "best effort" while we phase out `managed_config.toml` in favor of `requirements.toml`.
+type LegacyManagedConfigTomlFromFileConfigLayerSource struct {
+	File AbsolutePathBuf `json:"file"`
+	Type string          `json:"type"`
+}
+
+// AsLegacyManagedConfigTomlFromFile unmarshals the union as LegacyManagedConfigTomlFromFileConfigLayerSource (type="legacyManagedConfigTomlFromFile").
+func (u *ConfigLayerSource) AsLegacyManagedConfigTomlFromFile() (*LegacyManagedConfigTomlFromFileConfigLayerSource, error) {
+	var v LegacyManagedConfigTomlFromFileConfigLayerSource
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal ConfigLayerSource as LegacyManagedConfigTomlFromFileConfigLayerSource: %w", err)
+	}
+	return &v, nil
+}
+
+type LegacyManagedConfigTomlFromMdmConfigLayerSource struct {
+	Type string `json:"type"`
+}
+
+// AsLegacyManagedConfigTomlFromMdm unmarshals the union as LegacyManagedConfigTomlFromMdmConfigLayerSource (type="legacyManagedConfigTomlFromMdm").
+func (u *ConfigLayerSource) AsLegacyManagedConfigTomlFromMdm() (*LegacyManagedConfigTomlFromMdmConfigLayerSource, error) {
+	var v LegacyManagedConfigTomlFromMdmConfigLayerSource
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal ConfigLayerSource as LegacyManagedConfigTomlFromMdmConfigLayerSource: %w", err)
+	}
+	return &v, nil
+}
+
+type ContentItem struct {
+	Type string          `json:"type"`
+	Data json.RawMessage `json:"-"`
+}
+
+func (u *ContentItem) UnmarshalJSON(data []byte) error {
+	var disc struct {
+		Type string `json:"type"`
+	}
+	if err := json.Unmarshal(data, &disc); err != nil {
+		return err
+	}
+	u.Type = disc.Type
+	u.Data = append(u.Data[:0], data...)
+	return nil
+}
+
+func (u ContentItem) MarshalJSON() ([]byte, error) {
+	if u.Data != nil {
+		return []byte(u.Data), nil
+	}
+	return json.Marshal(struct {
+		Type string `json:"type"`
+	}{Type: u.Type})
+}
+
+// ContentItem type discriminator values.
+const (
+	ContentItemTypeInputText  = "input_text"
+	ContentItemTypeInputImage = "input_image"
+	ContentItemTypeOutputText = "output_text"
+)
+
+type InputTextContentItem struct {
+	Text string `json:"text"`
+	Type string `json:"type"`
+}
+
+// AsInputText unmarshals the union as InputTextContentItem (type="input_text").
+func (u *ContentItem) AsInputText() (*InputTextContentItem, error) {
+	var v InputTextContentItem
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal ContentItem as InputTextContentItem: %w", err)
+	}
+	return &v, nil
+}
+
+type InputImageContentItem struct {
+	ImageURL string `json:"image_url"`
+	Type     string `json:"type"`
+}
+
+// AsInputImage unmarshals the union as InputImageContentItem (type="input_image").
+func (u *ContentItem) AsInputImage() (*InputImageContentItem, error) {
+	var v InputImageContentItem
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal ContentItem as InputImageContentItem: %w", err)
+	}
+	return &v, nil
+}
+
+type OutputTextContentItem struct {
+	Text string `json:"text"`
+	Type string `json:"type"`
+}
+
+// AsOutputText unmarshals the union as OutputTextContentItem (type="output_text").
+func (u *ContentItem) AsOutputText() (*OutputTextContentItem, error) {
+	var v OutputTextContentItem
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal ContentItem as OutputTextContentItem: %w", err)
+	}
+	return &v, nil
+}
+
+type DynamicToolCallOutputContentItem struct {
+	Type string          `json:"type"`
+	Data json.RawMessage `json:"-"`
+}
+
+func (u *DynamicToolCallOutputContentItem) UnmarshalJSON(data []byte) error {
+	var disc struct {
+		Type string `json:"type"`
+	}
+	if err := json.Unmarshal(data, &disc); err != nil {
+		return err
+	}
+	u.Type = disc.Type
+	u.Data = append(u.Data[:0], data...)
+	return nil
+}
+
+func (u DynamicToolCallOutputContentItem) MarshalJSON() ([]byte, error) {
+	if u.Data != nil {
+		return []byte(u.Data), nil
+	}
+	return json.Marshal(struct {
+		Type string `json:"type"`
+	}{Type: u.Type})
+}
+
+// DynamicToolCallOutputContentItem type discriminator values.
+const (
+	DynamicToolCallOutputContentItemTypeInputText  = "inputText"
+	DynamicToolCallOutputContentItemTypeInputImage = "inputImage"
+)
+
+type InputTextDynamicToolCallOutputContentItem struct {
+	Text string `json:"text"`
+	Type string `json:"type"`
+}
+
+// AsInputText unmarshals the union as InputTextDynamicToolCallOutputContentItem (type="inputText").
+func (u *DynamicToolCallOutputContentItem) AsInputText() (*InputTextDynamicToolCallOutputContentItem, error) {
+	var v InputTextDynamicToolCallOutputContentItem
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal DynamicToolCallOutputContentItem as InputTextDynamicToolCallOutputContentItem: %w", err)
+	}
+	return &v, nil
+}
+
+type InputImageDynamicToolCallOutputContentItem struct {
+	ImageURL string `json:"imageUrl"`
+	Type     string `json:"type"`
+}
+
+// AsInputImage unmarshals the union as InputImageDynamicToolCallOutputContentItem (type="inputImage").
+func (u *DynamicToolCallOutputContentItem) AsInputImage() (*InputImageDynamicToolCallOutputContentItem, error) {
+	var v InputImageDynamicToolCallOutputContentItem
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal DynamicToolCallOutputContentItem as InputImageDynamicToolCallOutputContentItem: %w", err)
+	}
+	return &v, nil
+}
+
+// FunctionCallOutputContentItem Responses API compatible content items that can be returned by a tool call. This is a subset of ContentItem with the types we support as function call outputs.
+type FunctionCallOutputContentItem struct {
+	Type string          `json:"type"`
+	Data json.RawMessage `json:"-"`
+}
+
+func (u *FunctionCallOutputContentItem) UnmarshalJSON(data []byte) error {
+	var disc struct {
+		Type string `json:"type"`
+	}
+	if err := json.Unmarshal(data, &disc); err != nil {
+		return err
+	}
+	u.Type = disc.Type
+	u.Data = append(u.Data[:0], data...)
+	return nil
+}
+
+func (u FunctionCallOutputContentItem) MarshalJSON() ([]byte, error) {
+	if u.Data != nil {
+		return []byte(u.Data), nil
+	}
+	return json.Marshal(struct {
+		Type string `json:"type"`
+	}{Type: u.Type})
+}
+
+// FunctionCallOutputContentItem type discriminator values.
+const (
+	FunctionCallOutputContentItemTypeInputText  = "input_text"
+	FunctionCallOutputContentItemTypeInputImage = "input_image"
+)
+
+type InputTextFunctionCallOutputContentItem struct {
+	Text string `json:"text"`
+	Type string `json:"type"`
+}
+
+// AsInputText unmarshals the union as InputTextFunctionCallOutputContentItem (type="input_text").
+func (u *FunctionCallOutputContentItem) AsInputText() (*InputTextFunctionCallOutputContentItem, error) {
+	var v InputTextFunctionCallOutputContentItem
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal FunctionCallOutputContentItem as InputTextFunctionCallOutputContentItem: %w", err)
+	}
+	return &v, nil
+}
+
+type InputImageFunctionCallOutputContentItem struct {
+	ImageURL string `json:"image_url"`
+	Type     string `json:"type"`
+}
+
+// AsInputImage unmarshals the union as InputImageFunctionCallOutputContentItem (type="input_image").
+func (u *FunctionCallOutputContentItem) AsInputImage() (*InputImageFunctionCallOutputContentItem, error) {
+	var v InputImageFunctionCallOutputContentItem
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal FunctionCallOutputContentItem as InputImageFunctionCallOutputContentItem: %w", err)
+	}
+	return &v, nil
+}
+
+type LocalShellAction struct {
+	Type string          `json:"type"`
+	Data json.RawMessage `json:"-"`
+}
+
+func (u *LocalShellAction) UnmarshalJSON(data []byte) error {
+	var disc struct {
+		Type string `json:"type"`
+	}
+	if err := json.Unmarshal(data, &disc); err != nil {
+		return err
+	}
+	u.Type = disc.Type
+	u.Data = append(u.Data[:0], data...)
+	return nil
+}
+
+func (u LocalShellAction) MarshalJSON() ([]byte, error) {
+	if u.Data != nil {
+		return []byte(u.Data), nil
+	}
+	return json.Marshal(struct {
+		Type string `json:"type"`
+	}{Type: u.Type})
+}
+
+// LocalShellAction type discriminator values.
+const (
+	LocalShellActionTypeExec = "exec"
+)
+
+type ExecLocalShellAction struct {
+	Command          []string          `json:"command"`
+	Env              map[string]string `json:"env,omitempty"`
+	TimeoutMs        *int64            `json:"timeout_ms,omitempty"`
+	Type             string            `json:"type"`
+	User             *string           `json:"user,omitempty"`
+	WorkingDirectory *string           `json:"working_directory,omitempty"`
+}
+
+// AsExec unmarshals the union as ExecLocalShellAction (type="exec").
+func (u *LocalShellAction) AsExec() (*ExecLocalShellAction, error) {
+	var v ExecLocalShellAction
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal LocalShellAction as ExecLocalShellAction: %w", err)
+	}
+	return &v, nil
+}
+
+type LoginAccountParams struct {
+	Type string          `json:"type"`
+	Data json.RawMessage `json:"-"`
+}
+
+func (u *LoginAccountParams) UnmarshalJSON(data []byte) error {
+	var disc struct {
+		Type string `json:"type"`
+	}
+	if err := json.Unmarshal(data, &disc); err != nil {
+		return err
+	}
+	u.Type = disc.Type
+	u.Data = append(u.Data[:0], data...)
+	return nil
+}
+
+func (u LoginAccountParams) MarshalJSON() ([]byte, error) {
+	if u.Data != nil {
+		return []byte(u.Data), nil
+	}
+	return json.Marshal(struct {
+		Type string `json:"type"`
+	}{Type: u.Type})
+}
+
+// LoginAccountParams type discriminator values.
+const (
+	LoginAccountParamsTypeApiKey            = "apiKey"
+	LoginAccountParamsTypeChatgpt           = "chatgpt"
+	LoginAccountParamsTypeChatgptAuthTokens = "chatgptAuthTokens"
+)
+
+type APIKeyLoginAccountParams struct {
+	APIKey string `json:"apiKey"`
+	Type   string `json:"type"`
+}
+
+// AsApiKey unmarshals the union as APIKeyLoginAccountParams (type="apiKey").
+func (u *LoginAccountParams) AsApiKey() (*APIKeyLoginAccountParams, error) {
+	var v APIKeyLoginAccountParams
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal LoginAccountParams as APIKeyLoginAccountParams: %w", err)
+	}
+	return &v, nil
+}
+
+type ChatgptLoginAccountParams struct {
+	Type string `json:"type"`
+}
+
+// AsChatgpt unmarshals the union as ChatgptLoginAccountParams (type="chatgpt").
+func (u *LoginAccountParams) AsChatgpt() (*ChatgptLoginAccountParams, error) {
+	var v ChatgptLoginAccountParams
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal LoginAccountParams as ChatgptLoginAccountParams: %w", err)
+	}
+	return &v, nil
+}
+
+// ChatgptAuthTokensLoginAccountParams [UNSTABLE] FOR OPENAI INTERNAL USE ONLY - DO NOT USE. The access token must contain the same scopes that Codex-managed ChatGPT auth tokens have.
+type ChatgptAuthTokensLoginAccountParams struct {
+	// Access token (JWT) supplied by the client. This token is used for backend API requests and email extraction.
+	AccessToken string `json:"accessToken"`
+	// Workspace/account identifier supplied by the client.
+	ChatgptAccountID string `json:"chatgptAccountId"`
+	// Optional plan type supplied by the client. When `null`, Codex attempts to derive the plan type from access-token claims. If unavailable, the plan defaults to `unknown`.
+	ChatgptPlanType *string `json:"chatgptPlanType,omitempty"`
+	Type            string  `json:"type"`
+}
+
+// AsChatgptAuthTokens unmarshals the union as ChatgptAuthTokensLoginAccountParams (type="chatgptAuthTokens").
+func (u *LoginAccountParams) AsChatgptAuthTokens() (*ChatgptAuthTokensLoginAccountParams, error) {
+	var v ChatgptAuthTokensLoginAccountParams
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal LoginAccountParams as ChatgptAuthTokensLoginAccountParams: %w", err)
+	}
+	return &v, nil
+}
+
+type LoginAccountResponse struct {
+	Type string          `json:"type"`
+	Data json.RawMessage `json:"-"`
+}
+
+func (u *LoginAccountResponse) UnmarshalJSON(data []byte) error {
+	var disc struct {
+		Type string `json:"type"`
+	}
+	if err := json.Unmarshal(data, &disc); err != nil {
+		return err
+	}
+	u.Type = disc.Type
+	u.Data = append(u.Data[:0], data...)
+	return nil
+}
+
+func (u LoginAccountResponse) MarshalJSON() ([]byte, error) {
+	if u.Data != nil {
+		return []byte(u.Data), nil
+	}
+	return json.Marshal(struct {
+		Type string `json:"type"`
+	}{Type: u.Type})
+}
+
+// LoginAccountResponse type discriminator values.
+const (
+	LoginAccountResponseTypeApiKey            = "apiKey"
+	LoginAccountResponseTypeChatgpt           = "chatgpt"
+	LoginAccountResponseTypeChatgptAuthTokens = "chatgptAuthTokens"
+)
+
+type APIKeyLoginAccountResponse struct {
+	Type string `json:"type"`
+}
+
+// AsApiKey unmarshals the union as APIKeyLoginAccountResponse (type="apiKey").
+func (u *LoginAccountResponse) AsApiKey() (*APIKeyLoginAccountResponse, error) {
+	var v APIKeyLoginAccountResponse
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal LoginAccountResponse as APIKeyLoginAccountResponse: %w", err)
+	}
+	return &v, nil
+}
+
+type ChatgptLoginAccountResponse struct {
+	// URL the client should open in a browser to initiate the OAuth flow.
+	AuthURL string `json:"authUrl"`
+	LoginID string `json:"loginId"`
+	Type    string `json:"type"`
+}
+
+// AsChatgpt unmarshals the union as ChatgptLoginAccountResponse (type="chatgpt").
+func (u *LoginAccountResponse) AsChatgpt() (*ChatgptLoginAccountResponse, error) {
+	var v ChatgptLoginAccountResponse
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal LoginAccountResponse as ChatgptLoginAccountResponse: %w", err)
+	}
+	return &v, nil
+}
+
+type ChatgptAuthTokensLoginAccountResponse struct {
+	Type string `json:"type"`
+}
+
+// AsChatgptAuthTokens unmarshals the union as ChatgptAuthTokensLoginAccountResponse (type="chatgptAuthTokens").
+func (u *LoginAccountResponse) AsChatgptAuthTokens() (*ChatgptAuthTokensLoginAccountResponse, error) {
+	var v ChatgptAuthTokensLoginAccountResponse
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal LoginAccountResponse as ChatgptAuthTokensLoginAccountResponse: %w", err)
+	}
+	return &v, nil
+}
+
+type PatchChangeKind struct {
+	Type string          `json:"type"`
+	Data json.RawMessage `json:"-"`
+}
+
+func (u *PatchChangeKind) UnmarshalJSON(data []byte) error {
+	var disc struct {
+		Type string `json:"type"`
+	}
+	if err := json.Unmarshal(data, &disc); err != nil {
+		return err
+	}
+	u.Type = disc.Type
+	u.Data = append(u.Data[:0], data...)
+	return nil
+}
+
+func (u PatchChangeKind) MarshalJSON() ([]byte, error) {
+	if u.Data != nil {
+		return []byte(u.Data), nil
+	}
+	return json.Marshal(struct {
+		Type string `json:"type"`
+	}{Type: u.Type})
+}
+
+// PatchChangeKind type discriminator values.
+const (
+	PatchChangeKindTypeAdd    = "add"
+	PatchChangeKindTypeDelete = "delete"
+	PatchChangeKindTypeUpdate = "update"
+)
+
+type AddPatchChangeKind struct {
+	Type string `json:"type"`
+}
+
+// AsAdd unmarshals the union as AddPatchChangeKind (type="add").
+func (u *PatchChangeKind) AsAdd() (*AddPatchChangeKind, error) {
+	var v AddPatchChangeKind
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal PatchChangeKind as AddPatchChangeKind: %w", err)
+	}
+	return &v, nil
+}
+
+type DeletePatchChangeKind struct {
+	Type string `json:"type"`
+}
+
+// AsDelete unmarshals the union as DeletePatchChangeKind (type="delete").
+func (u *PatchChangeKind) AsDelete() (*DeletePatchChangeKind, error) {
+	var v DeletePatchChangeKind
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal PatchChangeKind as DeletePatchChangeKind: %w", err)
+	}
+	return &v, nil
+}
+
+type UpdatePatchChangeKind struct {
+	MovePath *string `json:"move_path,omitempty"`
+	Type     string  `json:"type"`
+}
+
+// AsUpdate unmarshals the union as UpdatePatchChangeKind (type="update").
+func (u *PatchChangeKind) AsUpdate() (*UpdatePatchChangeKind, error) {
+	var v UpdatePatchChangeKind
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal PatchChangeKind as UpdatePatchChangeKind: %w", err)
+	}
+	return &v, nil
+}
+
+type ReadOnlyAccess struct {
+	Type string          `json:"type"`
+	Data json.RawMessage `json:"-"`
+}
+
+func (u *ReadOnlyAccess) UnmarshalJSON(data []byte) error {
+	var disc struct {
+		Type string `json:"type"`
+	}
+	if err := json.Unmarshal(data, &disc); err != nil {
+		return err
+	}
+	u.Type = disc.Type
+	u.Data = append(u.Data[:0], data...)
+	return nil
+}
+
+func (u ReadOnlyAccess) MarshalJSON() ([]byte, error) {
+	if u.Data != nil {
+		return []byte(u.Data), nil
+	}
+	return json.Marshal(struct {
+		Type string `json:"type"`
+	}{Type: u.Type})
+}
+
+// ReadOnlyAccess type discriminator values.
+const (
+	ReadOnlyAccessTypeRestricted = "restricted"
+	ReadOnlyAccessTypeFullAccess = "fullAccess"
+)
+
+type RestrictedReadOnlyAccess struct {
+	IncludePlatformDefaults *bool             `json:"includePlatformDefaults,omitempty"`
+	ReadableRoots           []AbsolutePathBuf `json:"readableRoots,omitempty"`
+	Type                    string            `json:"type"`
+}
+
+// AsRestricted unmarshals the union as RestrictedReadOnlyAccess (type="restricted").
+func (u *ReadOnlyAccess) AsRestricted() (*RestrictedReadOnlyAccess, error) {
+	var v RestrictedReadOnlyAccess
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal ReadOnlyAccess as RestrictedReadOnlyAccess: %w", err)
+	}
+	return &v, nil
+}
+
+type FullAccessReadOnlyAccess struct {
+	Type string `json:"type"`
+}
+
+// AsFullAccess unmarshals the union as FullAccessReadOnlyAccess (type="fullAccess").
+func (u *ReadOnlyAccess) AsFullAccess() (*FullAccessReadOnlyAccess, error) {
+	var v FullAccessReadOnlyAccess
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal ReadOnlyAccess as FullAccessReadOnlyAccess: %w", err)
+	}
+	return &v, nil
+}
+
+type ReasoningItemContent struct {
+	Type string          `json:"type"`
+	Data json.RawMessage `json:"-"`
+}
+
+func (u *ReasoningItemContent) UnmarshalJSON(data []byte) error {
+	var disc struct {
+		Type string `json:"type"`
+	}
+	if err := json.Unmarshal(data, &disc); err != nil {
+		return err
+	}
+	u.Type = disc.Type
+	u.Data = append(u.Data[:0], data...)
+	return nil
+}
+
+func (u ReasoningItemContent) MarshalJSON() ([]byte, error) {
+	if u.Data != nil {
+		return []byte(u.Data), nil
+	}
+	return json.Marshal(struct {
+		Type string `json:"type"`
+	}{Type: u.Type})
+}
+
+// ReasoningItemContent type discriminator values.
+const (
+	ReasoningItemContentTypeReasoningText = "reasoning_text"
+	ReasoningItemContentTypeText          = "text"
+)
+
+type ReasoningTextReasoningItemContent struct {
+	Text string `json:"text"`
+	Type string `json:"type"`
+}
+
+// AsReasoningText unmarshals the union as ReasoningTextReasoningItemContent (type="reasoning_text").
+func (u *ReasoningItemContent) AsReasoningText() (*ReasoningTextReasoningItemContent, error) {
+	var v ReasoningTextReasoningItemContent
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal ReasoningItemContent as ReasoningTextReasoningItemContent: %w", err)
+	}
+	return &v, nil
+}
+
+type TextReasoningItemContent struct {
+	Text string `json:"text"`
+	Type string `json:"type"`
+}
+
+// AsText unmarshals the union as TextReasoningItemContent (type="text").
+func (u *ReasoningItemContent) AsText() (*TextReasoningItemContent, error) {
+	var v TextReasoningItemContent
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal ReasoningItemContent as TextReasoningItemContent: %w", err)
+	}
+	return &v, nil
+}
+
+type ReasoningItemReasoningSummary struct {
+	Type string          `json:"type"`
+	Data json.RawMessage `json:"-"`
+}
+
+func (u *ReasoningItemReasoningSummary) UnmarshalJSON(data []byte) error {
+	var disc struct {
+		Type string `json:"type"`
+	}
+	if err := json.Unmarshal(data, &disc); err != nil {
+		return err
+	}
+	u.Type = disc.Type
+	u.Data = append(u.Data[:0], data...)
+	return nil
+}
+
+func (u ReasoningItemReasoningSummary) MarshalJSON() ([]byte, error) {
+	if u.Data != nil {
+		return []byte(u.Data), nil
+	}
+	return json.Marshal(struct {
+		Type string `json:"type"`
+	}{Type: u.Type})
+}
+
+// ReasoningItemReasoningSummary type discriminator values.
+const (
+	ReasoningItemReasoningSummaryTypeSummaryText = "summary_text"
+)
+
+type SummaryTextReasoningItemReasoningSummary struct {
+	Text string `json:"text"`
+	Type string `json:"type"`
+}
+
+// AsSummaryText unmarshals the union as SummaryTextReasoningItemReasoningSummary (type="summary_text").
+func (u *ReasoningItemReasoningSummary) AsSummaryText() (*SummaryTextReasoningItemReasoningSummary, error) {
+	var v SummaryTextReasoningItemReasoningSummary
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal ReasoningItemReasoningSummary as SummaryTextReasoningItemReasoningSummary: %w", err)
+	}
+	return &v, nil
+}
+
+type ResponseItem struct {
+	Type string          `json:"type"`
+	Data json.RawMessage `json:"-"`
+}
+
+func (u *ResponseItem) UnmarshalJSON(data []byte) error {
+	var disc struct {
+		Type string `json:"type"`
+	}
+	if err := json.Unmarshal(data, &disc); err != nil {
+		return err
+	}
+	u.Type = disc.Type
+	u.Data = append(u.Data[:0], data...)
+	return nil
+}
+
+func (u ResponseItem) MarshalJSON() ([]byte, error) {
+	if u.Data != nil {
+		return []byte(u.Data), nil
+	}
+	return json.Marshal(struct {
+		Type string `json:"type"`
+	}{Type: u.Type})
+}
+
+// ResponseItem type discriminator values.
+const (
+	ResponseItemTypeMessage              = "message"
+	ResponseItemTypeReasoning            = "reasoning"
+	ResponseItemTypeLocalShellCall       = "local_shell_call"
+	ResponseItemTypeFunctionCall         = "function_call"
+	ResponseItemTypeFunctionCallOutput   = "function_call_output"
+	ResponseItemTypeCustomToolCall       = "custom_tool_call"
+	ResponseItemTypeCustomToolCallOutput = "custom_tool_call_output"
+	ResponseItemTypeWebSearchCall        = "web_search_call"
+	ResponseItemTypeGhostSnapshot        = "ghost_snapshot"
+	ResponseItemTypeCompaction           = "compaction"
+	ResponseItemTypeOther                = "other"
+)
+
+type MessageResponseItem struct {
+	Content []ContentItem `json:"content"`
+	EndTurn *bool         `json:"end_turn,omitempty"`
+	ID      *string       `json:"id,omitempty"`
+	Phase   *MessagePhase `json:"phase,omitempty"`
+	Role    string        `json:"role"`
+	Type    string        `json:"type"`
+}
+
+// AsMessage unmarshals the union as MessageResponseItem (type="message").
+func (u *ResponseItem) AsMessage() (*MessageResponseItem, error) {
+	var v MessageResponseItem
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal ResponseItem as MessageResponseItem: %w", err)
+	}
+	return &v, nil
+}
+
+type ReasoningResponseItem struct {
+	Content          []ReasoningItemContent          `json:"content,omitempty"`
+	EncryptedContent *string                         `json:"encrypted_content,omitempty"`
+	ID               string                          `json:"id"`
+	Summary          []ReasoningItemReasoningSummary `json:"summary"`
+	Type             string                          `json:"type"`
+}
+
+// AsReasoning unmarshals the union as ReasoningResponseItem (type="reasoning").
+func (u *ResponseItem) AsReasoning() (*ReasoningResponseItem, error) {
+	var v ReasoningResponseItem
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal ResponseItem as ReasoningResponseItem: %w", err)
+	}
+	return &v, nil
+}
+
+type LocalShellCallResponseItem struct {
+	Action LocalShellAction `json:"action"`
+	// Set when using the Responses API.
+	CallID *string `json:"call_id,omitempty"`
+	// Legacy id field retained for compatibility with older payloads.
+	ID     *string          `json:"id,omitempty"`
+	Status LocalShellStatus `json:"status"`
+	Type   string           `json:"type"`
+}
+
+// AsLocalShellCall unmarshals the union as LocalShellCallResponseItem (type="local_shell_call").
+func (u *ResponseItem) AsLocalShellCall() (*LocalShellCallResponseItem, error) {
+	var v LocalShellCallResponseItem
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal ResponseItem as LocalShellCallResponseItem: %w", err)
+	}
+	return &v, nil
+}
+
+type FunctionCallResponseItem struct {
+	Arguments string  `json:"arguments"`
+	CallID    string  `json:"call_id"`
+	ID        *string `json:"id,omitempty"`
+	Name      string  `json:"name"`
+	Type      string  `json:"type"`
+}
+
+// AsFunctionCall unmarshals the union as FunctionCallResponseItem (type="function_call").
+func (u *ResponseItem) AsFunctionCall() (*FunctionCallResponseItem, error) {
+	var v FunctionCallResponseItem
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal ResponseItem as FunctionCallResponseItem: %w", err)
+	}
+	return &v, nil
+}
+
+type FunctionCallOutputResponseItem struct {
+	CallID string                    `json:"call_id"`
+	Output FunctionCallOutputPayload `json:"output"`
+	Type   string                    `json:"type"`
+}
+
+// AsFunctionCallOutput unmarshals the union as FunctionCallOutputResponseItem (type="function_call_output").
+func (u *ResponseItem) AsFunctionCallOutput() (*FunctionCallOutputResponseItem, error) {
+	var v FunctionCallOutputResponseItem
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal ResponseItem as FunctionCallOutputResponseItem: %w", err)
+	}
+	return &v, nil
+}
+
+type CustomToolCallResponseItem struct {
+	CallID string  `json:"call_id"`
+	ID     *string `json:"id,omitempty"`
+	Input  string  `json:"input"`
+	Name   string  `json:"name"`
+	Status *string `json:"status,omitempty"`
+	Type   string  `json:"type"`
+}
+
+// AsCustomToolCall unmarshals the union as CustomToolCallResponseItem (type="custom_tool_call").
+func (u *ResponseItem) AsCustomToolCall() (*CustomToolCallResponseItem, error) {
+	var v CustomToolCallResponseItem
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal ResponseItem as CustomToolCallResponseItem: %w", err)
+	}
+	return &v, nil
+}
+
+type CustomToolCallOutputResponseItem struct {
+	CallID string                    `json:"call_id"`
+	Output FunctionCallOutputPayload `json:"output"`
+	Type   string                    `json:"type"`
+}
+
+// AsCustomToolCallOutput unmarshals the union as CustomToolCallOutputResponseItem (type="custom_tool_call_output").
+func (u *ResponseItem) AsCustomToolCallOutput() (*CustomToolCallOutputResponseItem, error) {
+	var v CustomToolCallOutputResponseItem
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal ResponseItem as CustomToolCallOutputResponseItem: %w", err)
+	}
+	return &v, nil
+}
+
+type WebSearchCallResponseItem struct {
+	Action *WebSearchAction `json:"action,omitempty"`
+	ID     *string          `json:"id,omitempty"`
+	Status *string          `json:"status,omitempty"`
+	Type   string           `json:"type"`
+}
+
+// AsWebSearchCall unmarshals the union as WebSearchCallResponseItem (type="web_search_call").
+func (u *ResponseItem) AsWebSearchCall() (*WebSearchCallResponseItem, error) {
+	var v WebSearchCallResponseItem
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal ResponseItem as WebSearchCallResponseItem: %w", err)
+	}
+	return &v, nil
+}
+
+type GhostSnapshotResponseItem struct {
+	GhostCommit GhostCommit `json:"ghost_commit"`
+	Type        string      `json:"type"`
+}
+
+// AsGhostSnapshot unmarshals the union as GhostSnapshotResponseItem (type="ghost_snapshot").
+func (u *ResponseItem) AsGhostSnapshot() (*GhostSnapshotResponseItem, error) {
+	var v GhostSnapshotResponseItem
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal ResponseItem as GhostSnapshotResponseItem: %w", err)
+	}
+	return &v, nil
+}
+
+type CompactionResponseItem struct {
+	EncryptedContent string `json:"encrypted_content"`
+	Type             string `json:"type"`
+}
+
+// AsCompaction unmarshals the union as CompactionResponseItem (type="compaction").
+func (u *ResponseItem) AsCompaction() (*CompactionResponseItem, error) {
+	var v CompactionResponseItem
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal ResponseItem as CompactionResponseItem: %w", err)
+	}
+	return &v, nil
+}
+
+type OtherResponseItem struct {
+	Type string `json:"type"`
+}
+
+// AsOther unmarshals the union as OtherResponseItem (type="other").
+func (u *ResponseItem) AsOther() (*OtherResponseItem, error) {
+	var v OtherResponseItem
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal ResponseItem as OtherResponseItem: %w", err)
+	}
+	return &v, nil
+}
+
+type ReviewTarget struct {
+	Type string          `json:"type"`
+	Data json.RawMessage `json:"-"`
+}
+
+func (u *ReviewTarget) UnmarshalJSON(data []byte) error {
+	var disc struct {
+		Type string `json:"type"`
+	}
+	if err := json.Unmarshal(data, &disc); err != nil {
+		return err
+	}
+	u.Type = disc.Type
+	u.Data = append(u.Data[:0], data...)
+	return nil
+}
+
+func (u ReviewTarget) MarshalJSON() ([]byte, error) {
+	if u.Data != nil {
+		return []byte(u.Data), nil
+	}
+	return json.Marshal(struct {
+		Type string `json:"type"`
+	}{Type: u.Type})
+}
+
+// ReviewTarget type discriminator values.
+const (
+	ReviewTargetTypeUncommittedChanges = "uncommittedChanges"
+	ReviewTargetTypeBaseBranch         = "baseBranch"
+	ReviewTargetTypeCommit             = "commit"
+	ReviewTargetTypeCustom             = "custom"
+)
+
+// UncommittedChangesReviewTarget Review the working tree: staged, unstaged, and untracked files.
+type UncommittedChangesReviewTarget struct {
+	Type string `json:"type"`
+}
+
+// AsUncommittedChanges unmarshals the union as UncommittedChangesReviewTarget (type="uncommittedChanges").
+func (u *ReviewTarget) AsUncommittedChanges() (*UncommittedChangesReviewTarget, error) {
+	var v UncommittedChangesReviewTarget
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal ReviewTarget as UncommittedChangesReviewTarget: %w", err)
+	}
+	return &v, nil
+}
+
+// BaseBranchReviewTarget Review changes between the current branch and the given base branch.
+type BaseBranchReviewTarget struct {
+	Branch string `json:"branch"`
+	Type   string `json:"type"`
+}
+
+// AsBaseBranch unmarshals the union as BaseBranchReviewTarget (type="baseBranch").
+func (u *ReviewTarget) AsBaseBranch() (*BaseBranchReviewTarget, error) {
+	var v BaseBranchReviewTarget
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal ReviewTarget as BaseBranchReviewTarget: %w", err)
+	}
+	return &v, nil
+}
+
+// CommitReviewTarget Review the changes introduced by a specific commit.
+type CommitReviewTarget struct {
+	Sha string `json:"sha"`
+	// Optional human-readable label (e.g., commit subject) for UIs.
+	Title *string `json:"title,omitempty"`
+	Type  string  `json:"type"`
+}
+
+// AsCommit unmarshals the union as CommitReviewTarget (type="commit").
+func (u *ReviewTarget) AsCommit() (*CommitReviewTarget, error) {
+	var v CommitReviewTarget
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal ReviewTarget as CommitReviewTarget: %w", err)
+	}
+	return &v, nil
+}
+
+// CustomReviewTarget Arbitrary instructions, equivalent to the old free-form prompt.
+type CustomReviewTarget struct {
+	Instructions string `json:"instructions"`
+	Type         string `json:"type"`
+}
+
+// AsCustom unmarshals the union as CustomReviewTarget (type="custom").
+func (u *ReviewTarget) AsCustom() (*CustomReviewTarget, error) {
+	var v CustomReviewTarget
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal ReviewTarget as CustomReviewTarget: %w", err)
+	}
+	return &v, nil
+}
+
+type SandboxPolicy struct {
+	Type string          `json:"type"`
+	Data json.RawMessage `json:"-"`
+}
+
+func (u *SandboxPolicy) UnmarshalJSON(data []byte) error {
+	var disc struct {
+		Type string `json:"type"`
+	}
+	if err := json.Unmarshal(data, &disc); err != nil {
+		return err
+	}
+	u.Type = disc.Type
+	u.Data = append(u.Data[:0], data...)
+	return nil
+}
+
+func (u SandboxPolicy) MarshalJSON() ([]byte, error) {
+	if u.Data != nil {
+		return []byte(u.Data), nil
+	}
+	return json.Marshal(struct {
+		Type string `json:"type"`
+	}{Type: u.Type})
+}
+
+// SandboxPolicy type discriminator values.
+const (
+	SandboxPolicyTypeDangerFullAccess = "dangerFullAccess"
+	SandboxPolicyTypeReadOnly         = "readOnly"
+	SandboxPolicyTypeExternalSandbox  = "externalSandbox"
+	SandboxPolicyTypeWorkspaceWrite   = "workspaceWrite"
+)
+
+type DangerFullAccessSandboxPolicy struct {
+	Type string `json:"type"`
+}
+
+// AsDangerFullAccess unmarshals the union as DangerFullAccessSandboxPolicy (type="dangerFullAccess").
+func (u *SandboxPolicy) AsDangerFullAccess() (*DangerFullAccessSandboxPolicy, error) {
+	var v DangerFullAccessSandboxPolicy
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal SandboxPolicy as DangerFullAccessSandboxPolicy: %w", err)
+	}
+	return &v, nil
+}
+
+type ReadOnlySandboxPolicy struct {
+	Access json.RawMessage `json:"access,omitempty"`
+	Type   string          `json:"type"`
+}
+
+// AsReadOnly unmarshals the union as ReadOnlySandboxPolicy (type="readOnly").
+func (u *SandboxPolicy) AsReadOnly() (*ReadOnlySandboxPolicy, error) {
+	var v ReadOnlySandboxPolicy
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal SandboxPolicy as ReadOnlySandboxPolicy: %w", err)
+	}
+	return &v, nil
+}
+
+type ExternalSandboxSandboxPolicy struct {
+	NetworkAccess json.RawMessage `json:"networkAccess,omitempty"`
+	Type          string          `json:"type"`
+}
+
+// AsExternalSandbox unmarshals the union as ExternalSandboxSandboxPolicy (type="externalSandbox").
+func (u *SandboxPolicy) AsExternalSandbox() (*ExternalSandboxSandboxPolicy, error) {
+	var v ExternalSandboxSandboxPolicy
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal SandboxPolicy as ExternalSandboxSandboxPolicy: %w", err)
+	}
+	return &v, nil
+}
+
+type WorkspaceWriteSandboxPolicy struct {
+	ExcludeSlashTmp     *bool             `json:"excludeSlashTmp,omitempty"`
+	ExcludeTmpdirEnvVar *bool             `json:"excludeTmpdirEnvVar,omitempty"`
+	NetworkAccess       *bool             `json:"networkAccess,omitempty"`
+	ReadOnlyAccess      json.RawMessage   `json:"readOnlyAccess,omitempty"`
+	Type                string            `json:"type"`
+	WritableRoots       []AbsolutePathBuf `json:"writableRoots,omitempty"`
+}
+
+// AsWorkspaceWrite unmarshals the union as WorkspaceWriteSandboxPolicy (type="workspaceWrite").
+func (u *SandboxPolicy) AsWorkspaceWrite() (*WorkspaceWriteSandboxPolicy, error) {
+	var v WorkspaceWriteSandboxPolicy
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal SandboxPolicy as WorkspaceWriteSandboxPolicy: %w", err)
+	}
+	return &v, nil
+}
+
+type ThreadItem struct {
+	Type string          `json:"type"`
+	Data json.RawMessage `json:"-"`
+}
+
+func (u *ThreadItem) UnmarshalJSON(data []byte) error {
+	var disc struct {
+		Type string `json:"type"`
+	}
+	if err := json.Unmarshal(data, &disc); err != nil {
+		return err
+	}
+	u.Type = disc.Type
+	u.Data = append(u.Data[:0], data...)
+	return nil
+}
+
+func (u ThreadItem) MarshalJSON() ([]byte, error) {
+	if u.Data != nil {
+		return []byte(u.Data), nil
+	}
+	return json.Marshal(struct {
+		Type string `json:"type"`
+	}{Type: u.Type})
+}
+
+// ThreadItem type discriminator values.
+const (
+	ThreadItemTypeUserMessage         = "userMessage"
+	ThreadItemTypeAgentMessage        = "agentMessage"
+	ThreadItemTypePlan                = "plan"
+	ThreadItemTypeReasoning           = "reasoning"
+	ThreadItemTypeCommandExecution    = "commandExecution"
+	ThreadItemTypeFileChange          = "fileChange"
+	ThreadItemTypeMcpToolCall         = "mcpToolCall"
+	ThreadItemTypeDynamicToolCall     = "dynamicToolCall"
+	ThreadItemTypeCollabAgentToolCall = "collabAgentToolCall"
+	ThreadItemTypeWebSearch           = "webSearch"
+	ThreadItemTypeImageView           = "imageView"
+	ThreadItemTypeEnteredReviewMode   = "enteredReviewMode"
+	ThreadItemTypeExitedReviewMode    = "exitedReviewMode"
+	ThreadItemTypeContextCompaction   = "contextCompaction"
+)
+
+type UserMessageThreadItem struct {
+	Content []UserInput `json:"content"`
+	ID      string      `json:"id"`
+	Type    string      `json:"type"`
+}
+
+// AsUserMessage unmarshals the union as UserMessageThreadItem (type="userMessage").
+func (u *ThreadItem) AsUserMessage() (*UserMessageThreadItem, error) {
+	var v UserMessageThreadItem
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal ThreadItem as UserMessageThreadItem: %w", err)
+	}
+	return &v, nil
+}
+
+type AgentMessageThreadItem struct {
+	ID    string        `json:"id"`
+	Phase *MessagePhase `json:"phase,omitempty"`
+	Text  string        `json:"text"`
+	Type  string        `json:"type"`
+}
+
+// AsAgentMessage unmarshals the union as AgentMessageThreadItem (type="agentMessage").
+func (u *ThreadItem) AsAgentMessage() (*AgentMessageThreadItem, error) {
+	var v AgentMessageThreadItem
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal ThreadItem as AgentMessageThreadItem: %w", err)
+	}
+	return &v, nil
+}
+
+// PlanThreadItem EXPERIMENTAL - proposed plan item content. The completed plan item is authoritative and may not match the concatenation of `PlanDelta` text.
+type PlanThreadItem struct {
+	ID   string `json:"id"`
+	Text string `json:"text"`
+	Type string `json:"type"`
+}
+
+// AsPlan unmarshals the union as PlanThreadItem (type="plan").
+func (u *ThreadItem) AsPlan() (*PlanThreadItem, error) {
+	var v PlanThreadItem
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal ThreadItem as PlanThreadItem: %w", err)
+	}
+	return &v, nil
+}
+
+type ReasoningThreadItem struct {
+	Content []string `json:"content,omitempty"`
+	ID      string   `json:"id"`
+	Summary []string `json:"summary,omitempty"`
+	Type    string   `json:"type"`
+}
+
+// AsReasoning unmarshals the union as ReasoningThreadItem (type="reasoning").
+func (u *ThreadItem) AsReasoning() (*ReasoningThreadItem, error) {
+	var v ReasoningThreadItem
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal ThreadItem as ReasoningThreadItem: %w", err)
+	}
+	return &v, nil
+}
+
+type CommandExecutionThreadItem struct {
+	// The command's output, aggregated from stdout and stderr.
+	AggregatedOutput *string `json:"aggregatedOutput,omitempty"`
+	// The command to be executed.
+	Command string `json:"command"`
+	// A best-effort parsing of the command to understand the action(s) it will perform. This returns a list of CommandAction objects because a single shell command may be composed of many commands piped together.
+	CommandActions []CommandAction `json:"commandActions"`
+	// The command's working directory.
+	Cwd string `json:"cwd"`
+	// The duration of the command execution in milliseconds.
+	DurationMs *int64 `json:"durationMs,omitempty"`
+	// The command's exit code.
+	ExitCode *int64 `json:"exitCode,omitempty"`
+	ID       string `json:"id"`
+	// Identifier for the underlying PTY process (when available).
+	ProcessID *string                `json:"processId,omitempty"`
+	Status    CommandExecutionStatus `json:"status"`
+	Type      string                 `json:"type"`
+}
+
+// AsCommandExecution unmarshals the union as CommandExecutionThreadItem (type="commandExecution").
+func (u *ThreadItem) AsCommandExecution() (*CommandExecutionThreadItem, error) {
+	var v CommandExecutionThreadItem
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal ThreadItem as CommandExecutionThreadItem: %w", err)
+	}
+	return &v, nil
+}
+
+type FileChangeThreadItem struct {
+	Changes []FileUpdateChange `json:"changes"`
+	ID      string             `json:"id"`
+	Status  PatchApplyStatus   `json:"status"`
+	Type    string             `json:"type"`
+}
+
+// AsFileChange unmarshals the union as FileChangeThreadItem (type="fileChange").
+func (u *ThreadItem) AsFileChange() (*FileChangeThreadItem, error) {
+	var v FileChangeThreadItem
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal ThreadItem as FileChangeThreadItem: %w", err)
+	}
+	return &v, nil
+}
+
+type MCPToolCallThreadItem struct {
+	// The duration of the MCP tool call in milliseconds.
+	DurationMs *int64             `json:"durationMs,omitempty"`
+	Error      *MCPToolCallError  `json:"error,omitempty"`
+	ID         string             `json:"id"`
+	Result     *MCPToolCallResult `json:"result,omitempty"`
+	Server     string             `json:"server"`
+	Status     MCPToolCallStatus  `json:"status"`
+	Tool       string             `json:"tool"`
+	Type       string             `json:"type"`
+}
+
+// AsMcpToolCall unmarshals the union as MCPToolCallThreadItem (type="mcpToolCall").
+func (u *ThreadItem) AsMcpToolCall() (*MCPToolCallThreadItem, error) {
+	var v MCPToolCallThreadItem
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal ThreadItem as MCPToolCallThreadItem: %w", err)
+	}
+	return &v, nil
+}
+
+type DynamicToolCallThreadItem struct {
+	ContentItems []DynamicToolCallOutputContentItem `json:"contentItems,omitempty"`
+	// The duration of the dynamic tool call in milliseconds.
+	DurationMs *int64                `json:"durationMs,omitempty"`
+	ID         string                `json:"id"`
+	Status     DynamicToolCallStatus `json:"status"`
+	Success    *bool                 `json:"success,omitempty"`
+	Tool       string                `json:"tool"`
+	Type       string                `json:"type"`
+}
+
+// AsDynamicToolCall unmarshals the union as DynamicToolCallThreadItem (type="dynamicToolCall").
+func (u *ThreadItem) AsDynamicToolCall() (*DynamicToolCallThreadItem, error) {
+	var v DynamicToolCallThreadItem
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal ThreadItem as DynamicToolCallThreadItem: %w", err)
+	}
+	return &v, nil
+}
+
+type CollabAgentToolCallThreadItem struct {
+	// Last known status of the target agents, when available.
+	AgentsStates map[string]CollabAgentState `json:"agentsStates"`
+	// Unique identifier for this collab tool call.
+	ID string `json:"id"`
+	// Prompt text sent as part of the collab tool call, when available.
+	Prompt *string `json:"prompt,omitempty"`
+	// Thread ID of the receiving agent, when applicable. In case of spawn operation, this corresponds to the newly spawned agent.
+	ReceiverThreadIds []string `json:"receiverThreadIds"`
+	// Thread ID of the agent issuing the collab request.
+	SenderThreadID string `json:"senderThreadId"`
+	// Current status of the collab tool call.
+	Status json.RawMessage `json:"status"`
+	// Name of the collab tool that was invoked.
+	Tool json.RawMessage `json:"tool"`
+	Type string          `json:"type"`
+}
+
+// AsCollabAgentToolCall unmarshals the union as CollabAgentToolCallThreadItem (type="collabAgentToolCall").
+func (u *ThreadItem) AsCollabAgentToolCall() (*CollabAgentToolCallThreadItem, error) {
+	var v CollabAgentToolCallThreadItem
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal ThreadItem as CollabAgentToolCallThreadItem: %w", err)
+	}
+	return &v, nil
+}
+
+type WebSearchThreadItem struct {
+	Action *WebSearchAction `json:"action,omitempty"`
+	ID     string           `json:"id"`
+	Query  string           `json:"query"`
+	Type   string           `json:"type"`
+}
+
+// AsWebSearch unmarshals the union as WebSearchThreadItem (type="webSearch").
+func (u *ThreadItem) AsWebSearch() (*WebSearchThreadItem, error) {
+	var v WebSearchThreadItem
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal ThreadItem as WebSearchThreadItem: %w", err)
+	}
+	return &v, nil
+}
+
+type ImageViewThreadItem struct {
+	ID   string `json:"id"`
+	Path string `json:"path"`
+	Type string `json:"type"`
+}
+
+// AsImageView unmarshals the union as ImageViewThreadItem (type="imageView").
+func (u *ThreadItem) AsImageView() (*ImageViewThreadItem, error) {
+	var v ImageViewThreadItem
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal ThreadItem as ImageViewThreadItem: %w", err)
+	}
+	return &v, nil
+}
+
+type EnteredReviewModeThreadItem struct {
+	ID     string `json:"id"`
+	Review string `json:"review"`
+	Type   string `json:"type"`
+}
+
+// AsEnteredReviewMode unmarshals the union as EnteredReviewModeThreadItem (type="enteredReviewMode").
+func (u *ThreadItem) AsEnteredReviewMode() (*EnteredReviewModeThreadItem, error) {
+	var v EnteredReviewModeThreadItem
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal ThreadItem as EnteredReviewModeThreadItem: %w", err)
+	}
+	return &v, nil
+}
+
+type ExitedReviewModeThreadItem struct {
+	ID     string `json:"id"`
+	Review string `json:"review"`
+	Type   string `json:"type"`
+}
+
+// AsExitedReviewMode unmarshals the union as ExitedReviewModeThreadItem (type="exitedReviewMode").
+func (u *ThreadItem) AsExitedReviewMode() (*ExitedReviewModeThreadItem, error) {
+	var v ExitedReviewModeThreadItem
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal ThreadItem as ExitedReviewModeThreadItem: %w", err)
+	}
+	return &v, nil
+}
+
+type ContextCompactionThreadItem struct {
+	ID   string `json:"id"`
+	Type string `json:"type"`
+}
+
+// AsContextCompaction unmarshals the union as ContextCompactionThreadItem (type="contextCompaction").
+func (u *ThreadItem) AsContextCompaction() (*ContextCompactionThreadItem, error) {
+	var v ContextCompactionThreadItem
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal ThreadItem as ContextCompactionThreadItem: %w", err)
+	}
+	return &v, nil
+}
+
+type ThreadStatus struct {
+	Type string          `json:"type"`
+	Data json.RawMessage `json:"-"`
+}
+
+func (u *ThreadStatus) UnmarshalJSON(data []byte) error {
+	var disc struct {
+		Type string `json:"type"`
+	}
+	if err := json.Unmarshal(data, &disc); err != nil {
+		return err
+	}
+	u.Type = disc.Type
+	u.Data = append(u.Data[:0], data...)
+	return nil
+}
+
+func (u ThreadStatus) MarshalJSON() ([]byte, error) {
+	if u.Data != nil {
+		return []byte(u.Data), nil
+	}
+	return json.Marshal(struct {
+		Type string `json:"type"`
+	}{Type: u.Type})
+}
+
+// ThreadStatus type discriminator values.
+const (
+	ThreadStatusTypeNotLoaded   = "notLoaded"
+	ThreadStatusTypeIdle        = "idle"
+	ThreadStatusTypeSystemError = "systemError"
+	ThreadStatusTypeActive      = "active"
+)
+
+type NotLoadedThreadStatus struct {
+	Type string `json:"type"`
+}
+
+// AsNotLoaded unmarshals the union as NotLoadedThreadStatus (type="notLoaded").
+func (u *ThreadStatus) AsNotLoaded() (*NotLoadedThreadStatus, error) {
+	var v NotLoadedThreadStatus
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal ThreadStatus as NotLoadedThreadStatus: %w", err)
+	}
+	return &v, nil
+}
+
+type IDleThreadStatus struct {
+	Type string `json:"type"`
+}
+
+// AsIdle unmarshals the union as IDleThreadStatus (type="idle").
+func (u *ThreadStatus) AsIdle() (*IDleThreadStatus, error) {
+	var v IDleThreadStatus
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal ThreadStatus as IDleThreadStatus: %w", err)
+	}
+	return &v, nil
+}
+
+type SystemErrorThreadStatus struct {
+	Type string `json:"type"`
+}
+
+// AsSystemError unmarshals the union as SystemErrorThreadStatus (type="systemError").
+func (u *ThreadStatus) AsSystemError() (*SystemErrorThreadStatus, error) {
+	var v SystemErrorThreadStatus
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal ThreadStatus as SystemErrorThreadStatus: %w", err)
+	}
+	return &v, nil
+}
+
+type ActiveThreadStatus struct {
+	ActiveFlags []ThreadActiveFlag `json:"activeFlags"`
+	Type        string             `json:"type"`
+}
+
+// AsActive unmarshals the union as ActiveThreadStatus (type="active").
+func (u *ThreadStatus) AsActive() (*ActiveThreadStatus, error) {
+	var v ActiveThreadStatus
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal ThreadStatus as ActiveThreadStatus: %w", err)
+	}
+	return &v, nil
+}
+
+type UserInput struct {
+	Type string          `json:"type"`
+	Data json.RawMessage `json:"-"`
+}
+
+func (u *UserInput) UnmarshalJSON(data []byte) error {
+	var disc struct {
+		Type string `json:"type"`
+	}
+	if err := json.Unmarshal(data, &disc); err != nil {
+		return err
+	}
+	u.Type = disc.Type
+	u.Data = append(u.Data[:0], data...)
+	return nil
+}
+
+func (u UserInput) MarshalJSON() ([]byte, error) {
+	if u.Data != nil {
+		return []byte(u.Data), nil
+	}
+	return json.Marshal(struct {
+		Type string `json:"type"`
+	}{Type: u.Type})
+}
+
+// UserInput type discriminator values.
+const (
+	UserInputTypeText       = "text"
+	UserInputTypeImage      = "image"
+	UserInputTypeLocalImage = "localImage"
+	UserInputTypeSkill      = "skill"
+	UserInputTypeMention    = "mention"
+)
+
+type TextUserInput struct {
+	Text string `json:"text"`
+	// UI-defined spans within `text` used to render or persist special elements.
+	TextElements []TextElement `json:"text_elements,omitempty"`
+	Type         string        `json:"type"`
+}
+
+// AsText unmarshals the union as TextUserInput (type="text").
+func (u *UserInput) AsText() (*TextUserInput, error) {
+	var v TextUserInput
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal UserInput as TextUserInput: %w", err)
+	}
+	return &v, nil
+}
+
+type ImageUserInput struct {
+	Type string `json:"type"`
+	URL  string `json:"url"`
+}
+
+// AsImage unmarshals the union as ImageUserInput (type="image").
+func (u *UserInput) AsImage() (*ImageUserInput, error) {
+	var v ImageUserInput
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal UserInput as ImageUserInput: %w", err)
+	}
+	return &v, nil
+}
+
+type LocalImageUserInput struct {
+	Path string `json:"path"`
+	Type string `json:"type"`
+}
+
+// AsLocalImage unmarshals the union as LocalImageUserInput (type="localImage").
+func (u *UserInput) AsLocalImage() (*LocalImageUserInput, error) {
+	var v LocalImageUserInput
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal UserInput as LocalImageUserInput: %w", err)
+	}
+	return &v, nil
+}
+
+type SkillUserInput struct {
+	Name string `json:"name"`
+	Path string `json:"path"`
+	Type string `json:"type"`
+}
+
+// AsSkill unmarshals the union as SkillUserInput (type="skill").
+func (u *UserInput) AsSkill() (*SkillUserInput, error) {
+	var v SkillUserInput
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal UserInput as SkillUserInput: %w", err)
+	}
+	return &v, nil
+}
+
+type MentionUserInput struct {
+	Name string `json:"name"`
+	Path string `json:"path"`
+	Type string `json:"type"`
+}
+
+// AsMention unmarshals the union as MentionUserInput (type="mention").
+func (u *UserInput) AsMention() (*MentionUserInput, error) {
+	var v MentionUserInput
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal UserInput as MentionUserInput: %w", err)
+	}
+	return &v, nil
+}
+
+type WebSearchAction struct {
+	Type string          `json:"type"`
+	Data json.RawMessage `json:"-"`
+}
+
+func (u *WebSearchAction) UnmarshalJSON(data []byte) error {
+	var disc struct {
+		Type string `json:"type"`
+	}
+	if err := json.Unmarshal(data, &disc); err != nil {
+		return err
+	}
+	u.Type = disc.Type
+	u.Data = append(u.Data[:0], data...)
+	return nil
+}
+
+func (u WebSearchAction) MarshalJSON() ([]byte, error) {
+	if u.Data != nil {
+		return []byte(u.Data), nil
+	}
+	return json.Marshal(struct {
+		Type string `json:"type"`
+	}{Type: u.Type})
+}
+
+// WebSearchAction type discriminator values.
+const (
+	WebSearchActionTypeSearch     = "search"
+	WebSearchActionTypeOpenPage   = "open_page"
+	WebSearchActionTypeFindInPage = "find_in_page"
+	WebSearchActionTypeOther      = "other"
+)
+
+type SearchWebSearchAction struct {
+	Queries []string `json:"queries,omitempty"`
+	Query   *string  `json:"query,omitempty"`
+	Type    string   `json:"type"`
+}
+
+// AsSearch unmarshals the union as SearchWebSearchAction (type="search").
+func (u *WebSearchAction) AsSearch() (*SearchWebSearchAction, error) {
+	var v SearchWebSearchAction
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal WebSearchAction as SearchWebSearchAction: %w", err)
+	}
+	return &v, nil
+}
+
+type OpenPageWebSearchAction struct {
+	Type string  `json:"type"`
+	URL  *string `json:"url,omitempty"`
+}
+
+// AsOpenPage unmarshals the union as OpenPageWebSearchAction (type="open_page").
+func (u *WebSearchAction) AsOpenPage() (*OpenPageWebSearchAction, error) {
+	var v OpenPageWebSearchAction
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal WebSearchAction as OpenPageWebSearchAction: %w", err)
+	}
+	return &v, nil
+}
+
+type FindInPageWebSearchAction struct {
+	Pattern *string `json:"pattern,omitempty"`
+	Type    string  `json:"type"`
+	URL     *string `json:"url,omitempty"`
+}
+
+// AsFindInPage unmarshals the union as FindInPageWebSearchAction (type="find_in_page").
+func (u *WebSearchAction) AsFindInPage() (*FindInPageWebSearchAction, error) {
+	var v FindInPageWebSearchAction
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal WebSearchAction as FindInPageWebSearchAction: %w", err)
+	}
+	return &v, nil
+}
+
+type OtherWebSearchAction struct {
+	Type string `json:"type"`
+}
+
+// AsOther unmarshals the union as OtherWebSearchAction (type="other").
+func (u *WebSearchAction) AsOther() (*OtherWebSearchAction, error) {
+	var v OtherWebSearchAction
+	if err := json.Unmarshal(u.Data, &v); err != nil {
+		return nil, fmt.Errorf("unmarshal WebSearchAction as OtherWebSearchAction: %w", err)
 	}
 	return &v, nil
 }

@@ -476,25 +476,36 @@ func (g *codeGenerator) generateTypes() {
 	g.typesCode = lines
 }
 
-func (g *codeGenerator) isDiscriminatedUnion(defn map[string]interface{}) bool {
+// discriminatorField returns the discriminator field name ("method" or "type")
+// if defn is a discriminated union, or "" if it is not.
+func (g *codeGenerator) discriminatorField(defn map[string]interface{}) string {
 	oneOf, ok := defn["oneOf"].([]interface{})
 	if !ok || len(oneOf) == 0 {
-		return false
+		return ""
 	}
 	first, _ := oneOf[0].(map[string]interface{})
 	if first == nil {
-		return false
+		return ""
 	}
 	props, _ := first["properties"].(map[string]interface{})
 	if props == nil {
-		return false
+		return ""
 	}
-	methodProp, _ := props["method"].(map[string]interface{})
-	if methodProp == nil {
-		return false
+	// Check "method" first (JSON-RPC style), then "type" (tagged unions)
+	for _, field := range []string{"method", "type"} {
+		fp, _ := props[field].(map[string]interface{})
+		if fp == nil {
+			continue
+		}
+		if _, hasEnum := fp["enum"]; hasEnum {
+			return field
+		}
 	}
-	_, hasEnum := methodProp["enum"]
-	return hasEnum
+	return ""
+}
+
+func (g *codeGenerator) isDiscriminatedUnion(defn map[string]interface{}) bool {
+	return g.discriminatorField(defn) != ""
 }
 
 func (g *codeGenerator) genEnum(goName string, defn map[string]interface{}) string {
@@ -731,6 +742,14 @@ func (g *codeGenerator) generateUnions() {
 }
 
 func (g *codeGenerator) genDiscriminatedUnion(goName string, defn map[string]interface{}) string {
+	discField := g.discriminatorField(defn)
+	if discField == "type" {
+		return g.genTypeDiscriminatedUnion(goName, defn)
+	}
+	return g.genMethodDiscriminatedUnion(goName, defn)
+}
+
+func (g *codeGenerator) genMethodDiscriminatedUnion(goName string, defn map[string]interface{}) string {
 	var lines []string
 	desc := sanitizeDesc(getString(defn, "description"))
 	if desc != "" {
@@ -809,6 +828,112 @@ func (g *codeGenerator) genDiscriminatedUnion(goName string, defn map[string]int
 	return strings.Join(lines, "\n")
 }
 
+func (g *codeGenerator) genTypeDiscriminatedUnion(goName string, defn map[string]interface{}) string {
+	var lines []string
+	desc := sanitizeDesc(getString(defn, "description"))
+	if desc != "" {
+		lines = append(lines, fmt.Sprintf("// %s %s", goName, desc))
+	}
+
+	variants, _ := defn["oneOf"].([]interface{})
+
+	// Generate the wrapper struct with Type discriminator and raw Data
+	lines = append(lines, fmt.Sprintf("type %s struct {", goName))
+	lines = append(lines, "\tType string `json:\"type\"`")
+	lines = append(lines, "\tData json.RawMessage `json:\"-\"`")
+	lines = append(lines, "}\n")
+
+	// Generate UnmarshalJSON that captures the full payload in Data
+	lines = append(lines, fmt.Sprintf("func (u *%s) UnmarshalJSON(data []byte) error {", goName))
+	lines = append(lines, "\tvar disc struct { Type string `json:\"type\"` }")
+	lines = append(lines, "\tif err := json.Unmarshal(data, &disc); err != nil {")
+	lines = append(lines, "\t\treturn err")
+	lines = append(lines, "\t}")
+	lines = append(lines, "\tu.Type = disc.Type")
+	lines = append(lines, "\tu.Data = append(u.Data[:0], data...)")
+	lines = append(lines, "\treturn nil")
+	lines = append(lines, "}\n")
+
+	// Generate MarshalJSON that re-emits the stored Data
+	lines = append(lines, fmt.Sprintf("func (u %s) MarshalJSON() ([]byte, error) {", goName))
+	lines = append(lines, "\tif u.Data != nil {")
+	lines = append(lines, "\t\treturn []byte(u.Data), nil")
+	lines = append(lines, "\t}")
+	lines = append(lines, fmt.Sprintf("\treturn json.Marshal(struct{ Type string `json:\"type\"` }{Type: u.Type})"))
+	lines = append(lines, "}\n")
+
+	// Type constants
+	lines = append(lines, fmt.Sprintf("// %s type discriminator values.", goName))
+	lines = append(lines, "const (")
+	for _, v := range variants {
+		vm, ok := v.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		props, _ := vm["properties"].(map[string]interface{})
+		if props == nil {
+			continue
+		}
+		typeProp, _ := props["type"].(map[string]interface{})
+		if typeProp == nil {
+			continue
+		}
+		typeEnums, _ := typeProp["enum"].([]interface{})
+		if len(typeEnums) == 0 {
+			continue
+		}
+		typeVal := fmt.Sprintf("%v", typeEnums[0])
+		constName := goName + "Type" + enumValToConst(typeVal)
+		lines = append(lines, fmt.Sprintf("\t%s = %q", constName, typeVal))
+	}
+	lines = append(lines, ")\n")
+
+	// Generate typed getter methods for each variant
+	for _, v := range variants {
+		vm, ok := v.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		props, _ := vm["properties"].(map[string]interface{})
+		if props == nil {
+			continue
+		}
+		typeProp, _ := props["type"].(map[string]interface{})
+		if typeProp == nil {
+			continue
+		}
+		typeEnums, _ := typeProp["enum"].([]interface{})
+		if len(typeEnums) == 0 {
+			continue
+		}
+		typeVal := fmt.Sprintf("%v", typeEnums[0])
+
+		title := getString(vm, "title")
+		if title == "" {
+			continue
+		}
+		variantGoName := toGoName(title)
+
+		// Generate variant struct in types_gen.go (mark as generated so genStruct picks it up)
+		if !g.generated[variantGoName] {
+			lines = append(lines, g.genStruct(variantGoName, vm))
+			g.generated[variantGoName] = true
+		}
+
+		funcName := "As" + enumValToConst(typeVal)
+		lines = append(lines, fmt.Sprintf("// %s unmarshals the union as %s (type=%q).", funcName, variantGoName, typeVal))
+		lines = append(lines, fmt.Sprintf("func (u *%s) %s() (*%s, error) {", goName, funcName, variantGoName))
+		lines = append(lines, fmt.Sprintf("\tvar v %s", variantGoName))
+		lines = append(lines, "\tif err := json.Unmarshal(u.Data, &v); err != nil {")
+		lines = append(lines, fmt.Sprintf("\t\treturn nil, fmt.Errorf(\"unmarshal %s as %s: %%w\", err)", goName, variantGoName))
+		lines = append(lines, "\t}")
+		lines = append(lines, "\treturn &v, nil")
+		lines = append(lines, "}\n")
+	}
+
+	return strings.Join(lines, "\n")
+}
+
 func methodToFuncName(method string) string {
 	parts := strings.Split(method, "/")
 	var b strings.Builder
@@ -840,7 +965,7 @@ func (g *codeGenerator) generateMethods() {
 		{"ServerNotification", "Server notification methods.", "Notif"},
 		{"ServerRequest", "Server request methods.", "Req"},
 		{"ClientNotification", "Client notification methods.", "ClientNotif"},
-		{"EventMsg", "Event message methods.", "Event"},
+		// EventMsg uses "type" discriminator, constants generated in unions_gen.go
 	}
 
 	for _, grp := range groups {
@@ -851,32 +976,6 @@ func (g *codeGenerator) generateMethods() {
 		oneOf, _ := defn["oneOf"].([]interface{})
 		if len(oneOf) == 0 {
 			continue
-		}
-
-		// For EventMsg, check if variants actually have method fields
-		if grp.key == "EventMsg" {
-			hasMethod := false
-			for _, v := range oneOf {
-				vm, _ := v.(map[string]interface{})
-				if vm == nil {
-					continue
-				}
-				props, _ := vm["properties"].(map[string]interface{})
-				if props == nil {
-					continue
-				}
-				methodProp, _ := props["method"].(map[string]interface{})
-				if methodProp == nil {
-					continue
-				}
-				if _, ok := methodProp["enum"]; ok {
-					hasMethod = true
-					break
-				}
-			}
-			if !hasMethod {
-				continue
-			}
 		}
 
 		lines = append(lines, fmt.Sprintf("// %s", grp.comment))

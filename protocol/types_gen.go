@@ -24,13 +24,6 @@ type AdditionalPermissionProfile struct {
 	Network    *bool                            `json:"network,omitempty"`
 }
 
-type AgentMessageContent = json.RawMessage
-
-type TextAgentMessageContent struct {
-	Text string `json:"text"`
-	Type string `json:"type"`
-}
-
 // AgentStatus Agent lifecycle status, derived from emitted events.
 type AgentStatus = json.RawMessage
 
@@ -168,745 +161,6 @@ type DynamicToolCallResponse struct {
 	Success      bool                               `json:"success"`
 }
 
-// EventMsg Response event from the agent NOTE: Make sure none of these values have optional types, as it will mess up the extension code-gen.
-type EventMsg = json.RawMessage
-
-// ErrorEventMsg Error while executing a submission
-type ErrorEventMsg struct {
-	CodexErrorInfo *CodexErrorInfo `json:"codex_error_info,omitempty"`
-	Message        string          `json:"message"`
-	Type           string          `json:"type"`
-}
-
-// WarningEventMsg Warning issued while processing a submission. Unlike `Error`, this indicates the turn continued but the user should still be notified.
-type WarningEventMsg struct {
-	Message string `json:"message"`
-	Type    string `json:"type"`
-}
-
-// RealtimeConversationStartedEventMsg Realtime conversation lifecycle start event.
-type RealtimeConversationStartedEventMsg struct {
-	SessionID *string `json:"session_id,omitempty"`
-	Type      string  `json:"type"`
-}
-
-// RealtimeConversationRealtimeEventMsg Realtime conversation streaming payload event.
-type RealtimeConversationRealtimeEventMsg struct {
-	Payload RealtimeEvent `json:"payload"`
-	Type    string        `json:"type"`
-}
-
-// RealtimeConversationClosedEventMsg Realtime conversation lifecycle close event.
-type RealtimeConversationClosedEventMsg struct {
-	Reason *string `json:"reason,omitempty"`
-	Type   string  `json:"type"`
-}
-
-// ModelRerouteEventMsg Model routing changed from the requested model to a different model.
-type ModelRerouteEventMsg struct {
-	FromModel string             `json:"from_model"`
-	Reason    ModelRerouteReason `json:"reason"`
-	ToModel   string             `json:"to_model"`
-	Type      string             `json:"type"`
-}
-
-// ContextCompactedEventMsg Conversation history was compacted (either automatically or manually).
-type ContextCompactedEventMsg struct {
-	Type string `json:"type"`
-}
-
-// ThreadRolledBackEventMsg Conversation history was rolled back by dropping the last N user turns.
-type ThreadRolledBackEventMsg struct {
-	// Number of user turns that were removed from context.
-	NumTurns int64  `json:"num_turns"`
-	Type     string `json:"type"`
-}
-
-// TaskStartedEventMsg Agent has started a turn. v1 wire format uses `task_started`; accept `turn_started` for v2 interop.
-type TaskStartedEventMsg struct {
-	CollaborationModeKind json.RawMessage `json:"collaboration_mode_kind,omitempty"`
-	ModelContextWindow    *int64          `json:"model_context_window,omitempty"`
-	TurnID                string          `json:"turn_id"`
-	Type                  string          `json:"type"`
-}
-
-// TaskCompleteEventMsg Agent has completed all actions. v1 wire format uses `task_complete`; accept `turn_complete` for v2 interop.
-type TaskCompleteEventMsg struct {
-	LastAgentMessage *string `json:"last_agent_message,omitempty"`
-	TurnID           string  `json:"turn_id"`
-	Type             string  `json:"type"`
-}
-
-// TokenCountEventMsg Usage update for the current session, including totals and last turn. Optional means unknown — UIs should not display when `None`.
-type TokenCountEventMsg struct {
-	Info       *TokenUsageInfo    `json:"info,omitempty"`
-	RateLimits *RateLimitSnapshot `json:"rate_limits,omitempty"`
-	Type       string             `json:"type"`
-}
-
-// AgentMessageEventMsg Agent text output message
-type AgentMessageEventMsg struct {
-	Message string        `json:"message"`
-	Phase   *MessagePhase `json:"phase,omitempty"`
-	Type    string        `json:"type"`
-}
-
-// UserMessageEventMsg User/system input message (what was sent to the model)
-type UserMessageEventMsg struct {
-	// Image URLs sourced from `UserInput::Image`. These are safe to replay in legacy UI history events and correspond to images sent to the model.
-	Images []string `json:"images,omitempty"`
-	// Local file paths sourced from `UserInput::LocalImage`. These are kept so the UI can reattach images when editing history, and should not be sent to the model or treated as API-ready URLs.
-	LocalImages []string `json:"local_images,omitempty"`
-	Message     string   `json:"message"`
-	// UI-defined spans within `message` used to render or persist special elements.
-	TextElements []TextElement `json:"text_elements,omitempty"`
-	Type         string        `json:"type"`
-}
-
-// AgentMessageDeltaEventMsg Agent text output delta message
-type AgentMessageDeltaEventMsg struct {
-	Delta string `json:"delta"`
-	Type  string `json:"type"`
-}
-
-// AgentReasoningEventMsg Reasoning event from agent.
-type AgentReasoningEventMsg struct {
-	Text string `json:"text"`
-	Type string `json:"type"`
-}
-
-// AgentReasoningDeltaEventMsg Agent reasoning delta event from agent.
-type AgentReasoningDeltaEventMsg struct {
-	Delta string `json:"delta"`
-	Type  string `json:"type"`
-}
-
-// AgentReasoningRawContentEventMsg Raw chain-of-thought from agent.
-type AgentReasoningRawContentEventMsg struct {
-	Text string `json:"text"`
-	Type string `json:"type"`
-}
-
-// AgentReasoningRawContentDeltaEventMsg Agent reasoning content delta event from agent.
-type AgentReasoningRawContentDeltaEventMsg struct {
-	Delta string `json:"delta"`
-	Type  string `json:"type"`
-}
-
-// AgentReasoningSectionBreakEventMsg Signaled when the model begins a new reasoning summary section (e.g., a new titled block).
-type AgentReasoningSectionBreakEventMsg struct {
-	ItemID       *string `json:"item_id,omitempty"`
-	SummaryIndex *int64  `json:"summary_index,omitempty"`
-	Type         string  `json:"type"`
-}
-
-// SessionConfiguredEventMsg Ack the client's configure message.
-type SessionConfiguredEventMsg struct {
-	// When to escalate for approval for execution
-	ApprovalPolicy json.RawMessage `json:"approval_policy"`
-	// Working directory that should be treated as the *root* of the session.
-	Cwd          string    `json:"cwd"`
-	ForkedFromID *ThreadID `json:"forked_from_id,omitempty"`
-	// Current number of entries in the history log.
-	HistoryEntryCount int64 `json:"history_entry_count"`
-	// Identifier of the history log file (inode on Unix, 0 otherwise).
-	HistoryLogID int64 `json:"history_log_id"`
-	// Optional initial messages (as events) for resumed sessions. When present, UIs can use these to seed the history.
-	InitialMessages []EventMsg `json:"initial_messages,omitempty"`
-	// Tell the client what model is being queried.
-	Model           string `json:"model"`
-	ModelProviderID string `json:"model_provider_id"`
-	// Runtime proxy bind addresses, when the managed proxy was started for this session.
-	NetworkProxy *SessionNetworkProxyRuntime `json:"network_proxy,omitempty"`
-	// The effort the model is putting into reasoning about the user's request.
-	ReasoningEffort *ReasoningEffort `json:"reasoning_effort,omitempty"`
-	// Path in which the rollout is stored. Can be `None` for ephemeral threads
-	RolloutPath *string `json:"rollout_path,omitempty"`
-	// How to sandbox commands executed in the system
-	SandboxPolicy json.RawMessage `json:"sandbox_policy"`
-	ServiceTier   *ServiceTier    `json:"service_tier,omitempty"`
-	SessionID     ThreadID        `json:"session_id"`
-	// Optional user-facing thread name (may be unset).
-	ThreadName *string `json:"thread_name,omitempty"`
-	Type       string  `json:"type"`
-}
-
-// ThreadNameUpdatedEventMsg Updated session metadata (e.g., thread name changes).
-type ThreadNameUpdatedEventMsg struct {
-	ThreadID   ThreadID `json:"thread_id"`
-	ThreadName *string  `json:"thread_name,omitempty"`
-	Type       string   `json:"type"`
-}
-
-// MCPStartupUpdateEventMsg Incremental MCP startup progress updates.
-type MCPStartupUpdateEventMsg struct {
-	// Server name being started.
-	Server string `json:"server"`
-	// Current startup status.
-	Status json.RawMessage `json:"status"`
-	Type   string          `json:"type"`
-}
-
-// MCPStartupCompleteEventMsg Aggregate MCP startup completion summary.
-type MCPStartupCompleteEventMsg struct {
-	Cancelled []string            `json:"cancelled"`
-	Failed    []MCPStartupFailure `json:"failed"`
-	Ready     []string            `json:"ready"`
-	Type      string              `json:"type"`
-}
-
-type MCPToolCallBeginEventMsg struct {
-	// Identifier so this can be paired with the McpToolCallEnd event.
-	CallID     string        `json:"call_id"`
-	Invocation MCPInvocation `json:"invocation"`
-	Type       string        `json:"type"`
-}
-
-type MCPToolCallEndEventMsg struct {
-	// Identifier for the corresponding McpToolCallBegin that finished.
-	CallID     string        `json:"call_id"`
-	Duration   Duration      `json:"duration"`
-	Invocation MCPInvocation `json:"invocation"`
-	// Result of the tool call. Note this could be an error.
-	Result json.RawMessage `json:"result"`
-	Type   string          `json:"type"`
-}
-
-type WebSearchBeginEventMsg struct {
-	CallID string `json:"call_id"`
-	Type   string `json:"type"`
-}
-
-type WebSearchEndEventMsg struct {
-	Action WebSearchAction `json:"action"`
-	CallID string          `json:"call_id"`
-	Query  string          `json:"query"`
-	Type   string          `json:"type"`
-}
-
-// ExecCommandBeginEventMsg Notification that the server is about to execute a command.
-type ExecCommandBeginEventMsg struct {
-	// Identifier so this can be paired with the ExecCommandEnd event.
-	CallID string `json:"call_id"`
-	// The command to be executed.
-	Command []string `json:"command"`
-	// The command's working directory if not the default cwd for the agent.
-	Cwd string `json:"cwd"`
-	// Raw input sent to a unified exec session (if this is an interaction event).
-	InteractionInput *string         `json:"interaction_input,omitempty"`
-	ParsedCmd        []ParsedCommand `json:"parsed_cmd"`
-	// Identifier for the underlying PTY process (when available).
-	ProcessID *string `json:"process_id,omitempty"`
-	// Where the command originated. Defaults to Agent for backward compatibility.
-	Source json.RawMessage `json:"source,omitempty"`
-	// Turn ID that this command belongs to.
-	TurnID string `json:"turn_id"`
-	Type   string `json:"type"`
-}
-
-// ExecCommandOutputDeltaEventMsg Incremental chunk of output from a running command.
-type ExecCommandOutputDeltaEventMsg struct {
-	// Identifier for the ExecCommandBegin that produced this chunk.
-	CallID string `json:"call_id"`
-	// Raw bytes from the stream (may not be valid UTF-8).
-	Chunk string `json:"chunk"`
-	// Which stream produced this chunk.
-	Stream json.RawMessage `json:"stream"`
-	Type   string          `json:"type"`
-}
-
-// TerminalInteractionEventMsg Terminal interaction for an in-progress command (stdin sent and stdout observed).
-type TerminalInteractionEventMsg struct {
-	// Identifier for the ExecCommandBegin that produced this chunk.
-	CallID string `json:"call_id"`
-	// Process id associated with the running command.
-	ProcessID string `json:"process_id"`
-	// Stdin sent to the running session.
-	Stdin string `json:"stdin"`
-	Type  string `json:"type"`
-}
-
-type ExecCommandEndEventMsg struct {
-	// Captured aggregated output
-	AggregatedOutput *string `json:"aggregated_output,omitempty"`
-	// Identifier for the ExecCommandBegin that finished.
-	CallID string `json:"call_id"`
-	// The command that was executed.
-	Command []string `json:"command"`
-	// The command's working directory if not the default cwd for the agent.
-	Cwd string `json:"cwd"`
-	// The duration of the command execution.
-	Duration json.RawMessage `json:"duration"`
-	// The command's exit code.
-	ExitCode int64 `json:"exit_code"`
-	// Formatted output from the command, as seen by the model.
-	FormattedOutput string `json:"formatted_output"`
-	// Raw input sent to a unified exec session (if this is an interaction event).
-	InteractionInput *string         `json:"interaction_input,omitempty"`
-	ParsedCmd        []ParsedCommand `json:"parsed_cmd"`
-	// Identifier for the underlying PTY process (when available).
-	ProcessID *string `json:"process_id,omitempty"`
-	// Where the command originated. Defaults to Agent for backward compatibility.
-	Source json.RawMessage `json:"source,omitempty"`
-	// Completion status for this command execution.
-	Status json.RawMessage `json:"status"`
-	// Captured stderr
-	Stderr string `json:"stderr"`
-	// Captured stdout
-	Stdout string `json:"stdout"`
-	// Turn ID that this command belongs to.
-	TurnID string `json:"turn_id"`
-	Type   string `json:"type"`
-}
-
-// ViewImageToolCallEventMsg Notification that the agent attached a local image via the view_image tool.
-type ViewImageToolCallEventMsg struct {
-	// Identifier for the originating tool call.
-	CallID string `json:"call_id"`
-	// Local filesystem path provided to the tool.
-	Path string `json:"path"`
-	Type string `json:"type"`
-}
-
-type ExecApprovalRequestEventMsg struct {
-	// Optional additional filesystem permissions requested for this command.
-	AdditionalPermissions *PermissionProfile `json:"additional_permissions,omitempty"`
-	// Identifier for this specific approval callback. When absent, the approval is for the command item itself (`call_id`). This is present for subcommand approvals (via execve intercept).
-	ApprovalID *string `json:"approval_id,omitempty"`
-	// Ordered list of decisions the client may present for this prompt. When absent, clients should derive the legacy default set from the other fields on this request.
-	AvailableDecisions []ReviewDecision `json:"available_decisions,omitempty"`
-	// Identifier for the associated command execution item.
-	CallID string `json:"call_id"`
-	// The command to be executed.
-	Command []string `json:"command"`
-	// The command's working directory.
-	Cwd string `json:"cwd"`
-	// Optional network context for a blocked request that can be approved.
-	NetworkApprovalContext *NetworkApprovalContext `json:"network_approval_context,omitempty"`
-	ParsedCmd              []ParsedCommand         `json:"parsed_cmd"`
-	// Proposed execpolicy amendment that can be applied to allow future runs.
-	ProposedExecpolicyAmendment []string `json:"proposed_execpolicy_amendment,omitempty"`
-	// Proposed network policy amendments (for example allow/deny this host in future).
-	ProposedNetworkPolicyAmendments []NetworkPolicyAmendment `json:"proposed_network_policy_amendments,omitempty"`
-	// Optional human-readable reason for the approval (e.g. retry without sandbox).
-	Reason *string `json:"reason,omitempty"`
-	// Turn ID that this command belongs to. Uses `#[serde(default)]` for backwards compatibility.
-	TurnID *string `json:"turn_id,omitempty"`
-	Type   string  `json:"type"`
-}
-
-type RequestUserInputEventMsg struct {
-	// Responses API call id for the associated tool call, if available.
-	CallID    string                     `json:"call_id"`
-	Questions []RequestUserInputQuestion `json:"questions"`
-	// Turn ID that this request belongs to. Uses `#[serde(default)]` for backwards compatibility.
-	TurnID *string `json:"turn_id,omitempty"`
-	Type   string  `json:"type"`
-}
-
-type DynamicToolCallRequestEventMsg struct {
-	CallID string `json:"callId"`
-	Tool   string `json:"tool"`
-	TurnID string `json:"turnId"`
-	Type   string `json:"type"`
-}
-
-type DynamicToolCallResponseEventMsg struct {
-	// Dynamic tool call arguments.
-	Arguments json.RawMessage `json:"arguments"`
-	// Identifier for the corresponding DynamicToolCallRequest.
-	CallID string `json:"call_id"`
-	// Dynamic tool response content items.
-	ContentItems []DynamicToolCallOutputContentItem `json:"content_items"`
-	// The duration of the dynamic tool call.
-	Duration json.RawMessage `json:"duration"`
-	// Optional error text when the tool call failed before producing a response.
-	Error *string `json:"error,omitempty"`
-	// Whether the tool call succeeded.
-	Success bool `json:"success"`
-	// Dynamic tool name.
-	Tool string `json:"tool"`
-	// Turn ID that this dynamic tool call belongs to.
-	TurnID string `json:"turn_id"`
-	Type   string `json:"type"`
-}
-
-type ElicitationRequestEventMsg struct {
-	ID         RequestID `json:"id"`
-	Message    string    `json:"message"`
-	ServerName string    `json:"server_name"`
-	Type       string    `json:"type"`
-}
-
-type ApplyPatchApprovalRequestEventMsg struct {
-	// Responses API call id for the associated patch apply call, if available.
-	CallID  string                `json:"call_id"`
-	Changes map[string]FileChange `json:"changes"`
-	// When set, the agent is asking the user to allow writes under this root for the remainder of the session.
-	GrantRoot *string `json:"grant_root,omitempty"`
-	// Optional explanatory reason (e.g. request for extra write access).
-	Reason *string `json:"reason,omitempty"`
-	// Turn ID that this patch belongs to. Uses `#[serde(default)]` for backwards compatibility with older senders.
-	TurnID *string `json:"turn_id,omitempty"`
-	Type   string  `json:"type"`
-}
-
-// DeprecationNoticeEventMsg Notification advising the user that something they are using has been deprecated and should be phased out.
-type DeprecationNoticeEventMsg struct {
-	// Optional extra guidance, such as migration steps or rationale.
-	Details *string `json:"details,omitempty"`
-	// Concise summary of what is deprecated.
-	Summary string `json:"summary"`
-	Type    string `json:"type"`
-}
-
-type BackgroundEventEventMsg struct {
-	Message string `json:"message"`
-	Type    string `json:"type"`
-}
-
-type UndoStartedEventMsg struct {
-	Message *string `json:"message,omitempty"`
-	Type    string  `json:"type"`
-}
-
-type UndoCompletedEventMsg struct {
-	Message *string `json:"message,omitempty"`
-	Success bool    `json:"success"`
-	Type    string  `json:"type"`
-}
-
-// StreamErrorEventMsg Notification that a model stream experienced an error or disconnect and the system is handling it (e.g., retrying with backoff).
-type StreamErrorEventMsg struct {
-	// Optional details about the underlying stream failure (often the same human-readable message that is surfaced as the terminal error if retries are exhausted).
-	AdditionalDetails *string         `json:"additional_details,omitempty"`
-	CodexErrorInfo    *CodexErrorInfo `json:"codex_error_info,omitempty"`
-	Message           string          `json:"message"`
-	Type              string          `json:"type"`
-}
-
-// PatchApplyBeginEventMsg Notification that the agent is about to apply a code patch. Mirrors `ExecCommandBegin` so front‑ends can show progress indicators.
-type PatchApplyBeginEventMsg struct {
-	// If true, there was no ApplyPatchApprovalRequest for this patch.
-	AutoApproved bool `json:"auto_approved"`
-	// Identifier so this can be paired with the PatchApplyEnd event.
-	CallID string `json:"call_id"`
-	// The changes to be applied.
-	Changes map[string]FileChange `json:"changes"`
-	// Turn ID that this patch belongs to. Uses `#[serde(default)]` for backwards compatibility.
-	TurnID *string `json:"turn_id,omitempty"`
-	Type   string  `json:"type"`
-}
-
-// PatchApplyEndEventMsg Notification that a patch application has finished.
-type PatchApplyEndEventMsg struct {
-	// Identifier for the PatchApplyBegin that finished.
-	CallID string `json:"call_id"`
-	// The changes that were applied (mirrors PatchApplyBeginEvent::changes).
-	Changes map[string]FileChange `json:"changes,omitempty"`
-	// Completion status for this patch application.
-	Status json.RawMessage `json:"status"`
-	// Captured stderr (parser errors, IO failures, etc.).
-	Stderr string `json:"stderr"`
-	// Captured stdout (summary printed by apply_patch).
-	Stdout string `json:"stdout"`
-	// Whether the patch was applied successfully.
-	Success bool `json:"success"`
-	// Turn ID that this patch belongs to. Uses `#[serde(default)]` for backwards compatibility.
-	TurnID *string `json:"turn_id,omitempty"`
-	Type   string  `json:"type"`
-}
-
-type TurnDiffEventMsg struct {
-	Type        string `json:"type"`
-	UnifiedDiff string `json:"unified_diff"`
-}
-
-// GetHistoryEntryResponseEventMsg Response to GetHistoryEntryRequest.
-type GetHistoryEntryResponseEventMsg struct {
-	// The entry at the requested offset, if available and parseable.
-	Entry  *HistoryEntry `json:"entry,omitempty"`
-	LogID  int64         `json:"log_id"`
-	Offset int64         `json:"offset"`
-	Type   string        `json:"type"`
-}
-
-// MCPListToolsResponseEventMsg List of MCP tools available to the agent.
-type MCPListToolsResponseEventMsg struct {
-	// Authentication status for each configured MCP server.
-	AuthStatuses map[string]MCPAuthStatus `json:"auth_statuses"`
-	// Known resource templates grouped by server name.
-	ResourceTemplates map[string][]ResourceTemplate `json:"resource_templates"`
-	// Known resources grouped by server name.
-	Resources map[string][]Resource `json:"resources"`
-	// Fully qualified tool name -> tool definition.
-	Tools map[string]Tool `json:"tools"`
-	Type  string          `json:"type"`
-}
-
-// ListCustomPromptsResponseEventMsg List of custom prompts available to the agent.
-type ListCustomPromptsResponseEventMsg struct {
-	CustomPrompts []CustomPrompt `json:"custom_prompts"`
-	Type          string         `json:"type"`
-}
-
-// ListSkillsResponseEventMsg List of skills available to the agent.
-type ListSkillsResponseEventMsg struct {
-	Skills []SkillsListEntry `json:"skills"`
-	Type   string            `json:"type"`
-}
-
-// ListRemoteSkillsResponseEventMsg List of remote skills available to the agent.
-type ListRemoteSkillsResponseEventMsg struct {
-	Skills []RemoteSkillSummary `json:"skills"`
-	Type   string               `json:"type"`
-}
-
-// RemoteSkillDownloadedEventMsg Remote skill downloaded to local cache.
-type RemoteSkillDownloadedEventMsg struct {
-	ID   string `json:"id"`
-	Name string `json:"name"`
-	Path string `json:"path"`
-	Type string `json:"type"`
-}
-
-// SkillsUpdateAvailableEventMsg Notification that skill data may have been updated and clients may want to reload.
-type SkillsUpdateAvailableEventMsg struct {
-	Type string `json:"type"`
-}
-
-type PlanUpdateEventMsg struct {
-	// Arguments for the `update_plan` todo/checklist tool (not plan mode).
-	Explanation *string       `json:"explanation,omitempty"`
-	Plan        []PlanItemArg `json:"plan"`
-	Type        string        `json:"type"`
-}
-
-type TurnAbortedEventMsg struct {
-	Reason TurnAbortReason `json:"reason"`
-	TurnID *string         `json:"turn_id,omitempty"`
-	Type   string          `json:"type"`
-}
-
-// ShutdownCompleteEventMsg Notification that the agent is shutting down.
-type ShutdownCompleteEventMsg struct {
-	Type string `json:"type"`
-}
-
-// EnteredReviewModeEventMsg Entered review mode.
-type EnteredReviewModeEventMsg struct {
-	Target         ReviewTarget `json:"target"`
-	Type           string       `json:"type"`
-	UserFacingHint *string      `json:"user_facing_hint,omitempty"`
-}
-
-// ExitedReviewModeEventMsg Exited review mode with an optional final result to apply.
-type ExitedReviewModeEventMsg struct {
-	ReviewOutput *ReviewOutputEvent `json:"review_output,omitempty"`
-	Type         string             `json:"type"`
-}
-
-type RawResponseItemEventMsg struct {
-	Item ResponseItem `json:"item"`
-	Type string       `json:"type"`
-}
-
-type ItemStartedEventMsg struct {
-	Item     TurnItem `json:"item"`
-	ThreadID ThreadID `json:"thread_id"`
-	TurnID   string   `json:"turn_id"`
-	Type     string   `json:"type"`
-}
-
-type ItemCompletedEventMsg struct {
-	Item     TurnItem `json:"item"`
-	ThreadID ThreadID `json:"thread_id"`
-	TurnID   string   `json:"turn_id"`
-	Type     string   `json:"type"`
-}
-
-type AgentMessageContentDeltaEventMsg struct {
-	Delta    string `json:"delta"`
-	ItemID   string `json:"item_id"`
-	ThreadID string `json:"thread_id"`
-	TurnID   string `json:"turn_id"`
-	Type     string `json:"type"`
-}
-
-type PlanDeltaEventMsg struct {
-	Delta    string `json:"delta"`
-	ItemID   string `json:"item_id"`
-	ThreadID string `json:"thread_id"`
-	TurnID   string `json:"turn_id"`
-	Type     string `json:"type"`
-}
-
-type ReasoningContentDeltaEventMsg struct {
-	Delta        string `json:"delta"`
-	ItemID       string `json:"item_id"`
-	SummaryIndex *int64 `json:"summary_index,omitempty"`
-	ThreadID     string `json:"thread_id"`
-	TurnID       string `json:"turn_id"`
-	Type         string `json:"type"`
-}
-
-type ReasoningRawContentDeltaEventMsg struct {
-	ContentIndex *int64 `json:"content_index,omitempty"`
-	Delta        string `json:"delta"`
-	ItemID       string `json:"item_id"`
-	ThreadID     string `json:"thread_id"`
-	TurnID       string `json:"turn_id"`
-	Type         string `json:"type"`
-}
-
-// CollabAgentSpawnBeginEventMsg Collab interaction: agent spawn begin.
-type CollabAgentSpawnBeginEventMsg struct {
-	// Identifier for the collab tool call.
-	CallID string `json:"call_id"`
-	// Initial prompt sent to the agent. Can be empty to prevent CoT leaking at the beginning.
-	Prompt string `json:"prompt"`
-	// Thread ID of the sender.
-	SenderThreadID json.RawMessage `json:"sender_thread_id"`
-	Type           string          `json:"type"`
-}
-
-// CollabAgentSpawnEndEventMsg Collab interaction: agent spawn end.
-type CollabAgentSpawnEndEventMsg struct {
-	// Identifier for the collab tool call.
-	CallID string `json:"call_id"`
-	// Optional nickname assigned to the new agent.
-	NewAgentNickname *string `json:"new_agent_nickname,omitempty"`
-	// Optional role assigned to the new agent.
-	NewAgentRole *string `json:"new_agent_role,omitempty"`
-	// Thread ID of the newly spawned agent, if it was created.
-	NewThreadID *ThreadID `json:"new_thread_id,omitempty"`
-	// Initial prompt sent to the agent. Can be empty to prevent CoT leaking at the beginning.
-	Prompt string `json:"prompt"`
-	// Thread ID of the sender.
-	SenderThreadID json.RawMessage `json:"sender_thread_id"`
-	// Last known status of the new agent reported to the sender agent.
-	Status json.RawMessage `json:"status"`
-	Type   string          `json:"type"`
-}
-
-// CollabAgentInteractionBeginEventMsg Collab interaction: agent interaction begin.
-type CollabAgentInteractionBeginEventMsg struct {
-	// Identifier for the collab tool call.
-	CallID string `json:"call_id"`
-	// Prompt sent from the sender to the receiver. Can be empty to prevent CoT leaking at the beginning.
-	Prompt string `json:"prompt"`
-	// Thread ID of the receiver.
-	ReceiverThreadID json.RawMessage `json:"receiver_thread_id"`
-	// Thread ID of the sender.
-	SenderThreadID json.RawMessage `json:"sender_thread_id"`
-	Type           string          `json:"type"`
-}
-
-// CollabAgentInteractionEndEventMsg Collab interaction: agent interaction end.
-type CollabAgentInteractionEndEventMsg struct {
-	// Identifier for the collab tool call.
-	CallID string `json:"call_id"`
-	// Prompt sent from the sender to the receiver. Can be empty to prevent CoT leaking at the beginning.
-	Prompt string `json:"prompt"`
-	// Optional nickname assigned to the receiver agent.
-	ReceiverAgentNickname *string `json:"receiver_agent_nickname,omitempty"`
-	// Optional role assigned to the receiver agent.
-	ReceiverAgentRole *string `json:"receiver_agent_role,omitempty"`
-	// Thread ID of the receiver.
-	ReceiverThreadID json.RawMessage `json:"receiver_thread_id"`
-	// Thread ID of the sender.
-	SenderThreadID json.RawMessage `json:"sender_thread_id"`
-	// Last known status of the receiver agent reported to the sender agent.
-	Status json.RawMessage `json:"status"`
-	Type   string          `json:"type"`
-}
-
-// CollabWaitingBeginEventMsg Collab interaction: waiting begin.
-type CollabWaitingBeginEventMsg struct {
-	// ID of the waiting call.
-	CallID string `json:"call_id"`
-	// Optional nicknames/roles for receivers.
-	ReceiverAgents []CollabAgentRef `json:"receiver_agents,omitempty"`
-	// Thread ID of the receivers.
-	ReceiverThreadIds []ThreadID `json:"receiver_thread_ids"`
-	// Thread ID of the sender.
-	SenderThreadID json.RawMessage `json:"sender_thread_id"`
-	Type           string          `json:"type"`
-}
-
-// CollabWaitingEndEventMsg Collab interaction: waiting end.
-type CollabWaitingEndEventMsg struct {
-	// Optional receiver metadata paired with final statuses.
-	AgentStatuses []CollabAgentStatusEntry `json:"agent_statuses,omitempty"`
-	// ID of the waiting call.
-	CallID string `json:"call_id"`
-	// Thread ID of the sender.
-	SenderThreadID json.RawMessage `json:"sender_thread_id"`
-	// Last known status of the receiver agents reported to the sender agent.
-	Statuses map[string]AgentStatus `json:"statuses"`
-	Type     string                 `json:"type"`
-}
-
-// CollabCloseBeginEventMsg Collab interaction: close begin.
-type CollabCloseBeginEventMsg struct {
-	// Identifier for the collab tool call.
-	CallID string `json:"call_id"`
-	// Thread ID of the receiver.
-	ReceiverThreadID json.RawMessage `json:"receiver_thread_id"`
-	// Thread ID of the sender.
-	SenderThreadID json.RawMessage `json:"sender_thread_id"`
-	Type           string          `json:"type"`
-}
-
-// CollabCloseEndEventMsg Collab interaction: close end.
-type CollabCloseEndEventMsg struct {
-	// Identifier for the collab tool call.
-	CallID string `json:"call_id"`
-	// Optional nickname assigned to the receiver agent.
-	ReceiverAgentNickname *string `json:"receiver_agent_nickname,omitempty"`
-	// Optional role assigned to the receiver agent.
-	ReceiverAgentRole *string `json:"receiver_agent_role,omitempty"`
-	// Thread ID of the receiver.
-	ReceiverThreadID json.RawMessage `json:"receiver_thread_id"`
-	// Thread ID of the sender.
-	SenderThreadID json.RawMessage `json:"sender_thread_id"`
-	// Last known status of the receiver agent reported to the sender agent before the close.
-	Status json.RawMessage `json:"status"`
-	Type   string          `json:"type"`
-}
-
-// CollabResumeBeginEventMsg Collab interaction: resume begin.
-type CollabResumeBeginEventMsg struct {
-	// Identifier for the collab tool call.
-	CallID string `json:"call_id"`
-	// Optional nickname assigned to the receiver agent.
-	ReceiverAgentNickname *string `json:"receiver_agent_nickname,omitempty"`
-	// Optional role assigned to the receiver agent.
-	ReceiverAgentRole *string `json:"receiver_agent_role,omitempty"`
-	// Thread ID of the receiver.
-	ReceiverThreadID json.RawMessage `json:"receiver_thread_id"`
-	// Thread ID of the sender.
-	SenderThreadID json.RawMessage `json:"sender_thread_id"`
-	Type           string          `json:"type"`
-}
-
-// CollabResumeEndEventMsg Collab interaction: resume end.
-type CollabResumeEndEventMsg struct {
-	// Identifier for the collab tool call.
-	CallID string `json:"call_id"`
-	// Optional nickname assigned to the receiver agent.
-	ReceiverAgentNickname *string `json:"receiver_agent_nickname,omitempty"`
-	// Optional role assigned to the receiver agent.
-	ReceiverAgentRole *string `json:"receiver_agent_role,omitempty"`
-	// Thread ID of the receiver.
-	ReceiverThreadID json.RawMessage `json:"receiver_thread_id"`
-	// Thread ID of the sender.
-	SenderThreadID json.RawMessage `json:"sender_thread_id"`
-	// Last known status of the receiver agent reported to the sender agent after resume.
-	Status json.RawMessage `json:"status"`
-	Type   string          `json:"type"`
-}
-
 type ExecCommandApprovalParams struct {
 	// Identifier for this specific approval callback.
 	ApprovalID *string `json:"approvalId,omitempty"`
@@ -946,24 +200,6 @@ const (
 	ExecOutputStreamStdout ExecOutputStream = "stdout"
 	ExecOutputStreamStderr ExecOutputStream = "stderr"
 )
-
-type FileChange = json.RawMessage
-
-type AddFileChange struct {
-	Content string `json:"content"`
-	Type    string `json:"type"`
-}
-
-type DeleteFileChange struct {
-	Content string `json:"content"`
-	Type    string `json:"type"`
-}
-
-type UpdateFileChange struct {
-	MovePath    *string `json:"move_path,omitempty"`
-	Type        string  `json:"type"`
-	UnifiedDiff string  `json:"unified_diff"`
-}
 
 type FileChangeApprovalDecision = json.RawMessage
 
@@ -1134,34 +370,6 @@ const (
 	NetworkPolicyRuleActionAllow NetworkPolicyRuleAction = "allow"
 	NetworkPolicyRuleActionDeny  NetworkPolicyRuleAction = "deny"
 )
-
-type ParsedCommand = json.RawMessage
-
-type ReadParsedCommand struct {
-	Cmd  string `json:"cmd"`
-	Name string `json:"name"`
-	// (Best effort) Path to the file being read by the command. When possible, this is an absolute path, though when relative, it should be resolved against the `cwd`` that will be used to run the command to derive the absolute path.
-	Path string `json:"path"`
-	Type string `json:"type"`
-}
-
-type ListFilesParsedCommand struct {
-	Cmd  string  `json:"cmd"`
-	Path *string `json:"path,omitempty"`
-	Type string  `json:"type"`
-}
-
-type SearchParsedCommand struct {
-	Cmd   string  `json:"cmd"`
-	Path  *string `json:"path,omitempty"`
-	Query *string `json:"query,omitempty"`
-	Type  string  `json:"type"`
-}
-
-type UnknownParsedCommand struct {
-	Cmd  string `json:"cmd"`
-	Type string `json:"type"`
-}
 
 type PermissionProfile struct {
 	FileSystem *FileSystemPermissions `json:"file_system,omitempty"`
@@ -1365,48 +573,6 @@ const (
 	TurnAbortReasonReviewEnded TurnAbortReason = "review_ended"
 )
 
-type TurnItem = json.RawMessage
-
-type UserMessageTurnItem struct {
-	Content []UserInput `json:"content"`
-	ID      string      `json:"id"`
-	Type    string      `json:"type"`
-}
-
-// AgentMessageTurnItem Assistant-authored message payload used in turn-item streams. `phase` is optional because not all providers/models emit it. Consumers should use it when present, but retain legacy completion semantics when it is `None`.
-type AgentMessageTurnItem struct {
-	Content []AgentMessageContent `json:"content"`
-	ID      string                `json:"id"`
-	// Optional phase metadata carried through from `ResponseItem::Message`. This is currently used by TUI rendering to distinguish mid-turn commentary from a final answer and avoid status-indicator jitter.
-	Phase *MessagePhase `json:"phase,omitempty"`
-	Type  string        `json:"type"`
-}
-
-type PlanTurnItem struct {
-	ID   string `json:"id"`
-	Text string `json:"text"`
-	Type string `json:"type"`
-}
-
-type ReasoningTurnItem struct {
-	ID          string   `json:"id"`
-	RawContent  []string `json:"raw_content,omitempty"`
-	SummaryText []string `json:"summary_text"`
-	Type        string   `json:"type"`
-}
-
-type WebSearchTurnItem struct {
-	Action WebSearchAction `json:"action"`
-	ID     string          `json:"id"`
-	Query  string          `json:"query"`
-	Type   string          `json:"type"`
-}
-
-type ContextCompactionTurnItem struct {
-	ID   string `json:"id"`
-	Type string `json:"type"`
-}
-
 type W3cTraceContext struct {
 	Traceparent *string `json:"traceparent,omitempty"`
 	Tracestate  *string `json:"tracestate,omitempty"`
@@ -1414,18 +580,6 @@ type W3cTraceContext struct {
 
 // AbsolutePathBuf A path that is guaranteed to be absolute and normalized (though it is not guaranteed to be canonicalized or exist on the filesystem). IMPORTANT: When deserializing an `AbsolutePathBuf`, a base path must be set using [AbsolutePathBufGuard::new]. If no base path is set, the deserialization will fail unless the path being deserialized is already absolute.
 type AbsolutePathBuf = string
-
-type Account = json.RawMessage
-
-type APIKeyAccount struct {
-	Type string `json:"type"`
-}
-
-type ChatgptAccount struct {
-	Email    string   `json:"email"`
-	PlanType PlanType `json:"planType"`
-	Type     string   `json:"type"`
-}
 
 type AccountLoginCompletedNotification struct {
 	Error   *string `json:"error,omitempty"`
@@ -1662,33 +816,6 @@ type CollaborationModeMask struct {
 	ReasoningEffort *ReasoningEffort `json:"reasoning_effort,omitempty"`
 }
 
-type CommandAction = json.RawMessage
-
-type ReadCommandAction struct {
-	Command string `json:"command"`
-	Name    string `json:"name"`
-	Path    string `json:"path"`
-	Type    string `json:"type"`
-}
-
-type ListFilesCommandAction struct {
-	Command string  `json:"command"`
-	Path    *string `json:"path,omitempty"`
-	Type    string  `json:"type"`
-}
-
-type SearchCommandAction struct {
-	Command string  `json:"command"`
-	Path    *string `json:"path,omitempty"`
-	Query   *string `json:"query,omitempty"`
-	Type    string  `json:"type"`
-}
-
-type UnknownCommandAction struct {
-	Command string `json:"command"`
-	Type    string `json:"type"`
-}
-
 type CommandExecParams struct {
 	Command       []string       `json:"command"`
 	Cwd           *string        `json:"cwd,omitempty"`
@@ -1766,50 +893,6 @@ type ConfigLayerMetadata struct {
 	Version string            `json:"version"`
 }
 
-type ConfigLayerSource = json.RawMessage
-
-// MdmConfigLayerSource Managed preferences layer delivered by MDM (macOS only).
-type MdmConfigLayerSource struct {
-	Domain string `json:"domain"`
-	Key    string `json:"key"`
-	Type   string `json:"type"`
-}
-
-// SystemConfigLayerSource Managed config layer from a file (usually `managed_config.toml`).
-type SystemConfigLayerSource struct {
-	// This is the path to the system config.toml file, though it is not guaranteed to exist.
-	File json.RawMessage `json:"file"`
-	Type string          `json:"type"`
-}
-
-// UserConfigLayerSource User config layer from $CODEX_HOME/config.toml. This layer is special in that it is expected to be: - writable by the user - generally outside the workspace directory
-type UserConfigLayerSource struct {
-	// This is the path to the user's config.toml file, though it is not guaranteed to exist.
-	File json.RawMessage `json:"file"`
-	Type string          `json:"type"`
-}
-
-// ProjectConfigLayerSource Path to a .codex/ folder within a project. There could be multiple of these between `cwd` and the project/repo root.
-type ProjectConfigLayerSource struct {
-	DotCodexFolder AbsolutePathBuf `json:"dotCodexFolder"`
-	Type           string          `json:"type"`
-}
-
-// SessionFlagsConfigLayerSource Session-layer overrides supplied via `-c`/`--config`.
-type SessionFlagsConfigLayerSource struct {
-	Type string `json:"type"`
-}
-
-// LegacyManagedConfigTomlFromFileConfigLayerSource `managed_config.toml` was designed to be a config that was loaded as the last layer on top of everything else. This scheme did not quite work out as intended, but we keep this variant as a "best effort" while we phase out `managed_config.toml` in favor of `requirements.toml`.
-type LegacyManagedConfigTomlFromFileConfigLayerSource struct {
-	File AbsolutePathBuf `json:"file"`
-	Type string          `json:"type"`
-}
-
-type LegacyManagedConfigTomlFromMdmConfigLayerSource struct {
-	Type string `json:"type"`
-}
-
 type ConfigReadParams struct {
 	// Optional working directory to resolve project config layers. If specified, return the effective config as seen from that directory (i.e., including any project layers between `cwd` and the project/repo root).
 	Cwd           *string `json:"cwd,omitempty"`
@@ -1861,23 +944,6 @@ type ConfigWriteResponse struct {
 	Version            string              `json:"version"`
 }
 
-type ContentItem = json.RawMessage
-
-type InputTextContentItem struct {
-	Text string `json:"text"`
-	Type string `json:"type"`
-}
-
-type InputImageContentItem struct {
-	ImageURL string `json:"image_url"`
-	Type     string `json:"type"`
-}
-
-type OutputTextContentItem struct {
-	Text string `json:"text"`
-	Type string `json:"type"`
-}
-
 // ContextCompactedNotification Deprecated: Use `ContextCompaction` item type instead.
 type ContextCompactedNotification struct {
 	ThreadID string `json:"threadId"`
@@ -1895,18 +961,6 @@ type DeprecationNoticeNotification struct {
 	Details *string `json:"details,omitempty"`
 	// Concise summary of what is deprecated.
 	Summary string `json:"summary"`
-}
-
-type DynamicToolCallOutputContentItem = json.RawMessage
-
-type InputTextDynamicToolCallOutputContentItem struct {
-	Text string `json:"text"`
-	Type string `json:"type"`
-}
-
-type InputImageDynamicToolCallOutputContentItem struct {
-	ImageURL string `json:"imageUrl"`
-	Type     string `json:"type"`
 }
 
 type DynamicToolCallStatus string
@@ -2028,19 +1082,6 @@ const (
 
 type FunctionCallOutputBody = json.RawMessage
 
-// FunctionCallOutputContentItem Responses API compatible content items that can be returned by a tool call. This is a subset of ContentItem with the types we support as function call outputs.
-type FunctionCallOutputContentItem = json.RawMessage
-
-type InputTextFunctionCallOutputContentItem struct {
-	Text string `json:"text"`
-	Type string `json:"type"`
-}
-
-type InputImageFunctionCallOutputContentItem struct {
-	ImageURL string `json:"image_url"`
-	Type     string `json:"type"`
-}
-
 // FunctionCallOutputPayload The payload we send back to OpenAI when reporting a tool call result. `body` serializes directly as the wire value for `function_call_output.output`. `success` remains internal metadata for downstream handling.
 type FunctionCallOutputPayload struct {
 	Body    FunctionCallOutputBody `json:"body"`
@@ -2115,17 +1156,6 @@ type ListMCPServerStatusResponse struct {
 	NextCursor *string `json:"nextCursor,omitempty"`
 }
 
-type LocalShellAction = json.RawMessage
-
-type ExecLocalShellAction struct {
-	Command          []string          `json:"command"`
-	Env              map[string]string `json:"env,omitempty"`
-	TimeoutMs        *int64            `json:"timeout_ms,omitempty"`
-	Type             string            `json:"type"`
-	User             *string           `json:"user,omitempty"`
-	WorkingDirectory *string           `json:"working_directory,omitempty"`
-}
-
 type LocalShellStatus string
 
 const (
@@ -2133,45 +1163,6 @@ const (
 	LocalShellStatusInProgress LocalShellStatus = "in_progress"
 	LocalShellStatusIncomplete LocalShellStatus = "incomplete"
 )
-
-type LoginAccountParams = json.RawMessage
-
-type APIKeyLoginAccountParams struct {
-	APIKey string `json:"apiKey"`
-	Type   string `json:"type"`
-}
-
-type ChatgptLoginAccountParams struct {
-	Type string `json:"type"`
-}
-
-// ChatgptAuthTokensLoginAccountParams [UNSTABLE] FOR OPENAI INTERNAL USE ONLY - DO NOT USE. The access token must contain the same scopes that Codex-managed ChatGPT auth tokens have.
-type ChatgptAuthTokensLoginAccountParams struct {
-	// Access token (JWT) supplied by the client. This token is used for backend API requests and email extraction.
-	AccessToken string `json:"accessToken"`
-	// Workspace/account identifier supplied by the client.
-	ChatgptAccountID string `json:"chatgptAccountId"`
-	// Optional plan type supplied by the client. When `null`, Codex attempts to derive the plan type from access-token claims. If unavailable, the plan defaults to `unknown`.
-	ChatgptPlanType *string `json:"chatgptPlanType,omitempty"`
-	Type            string  `json:"type"`
-}
-
-type LoginAccountResponse = json.RawMessage
-
-type APIKeyLoginAccountResponse struct {
-	Type string `json:"type"`
-}
-
-type ChatgptLoginAccountResponse struct {
-	// URL the client should open in a browser to initiate the OAuth flow.
-	AuthURL string `json:"authUrl"`
-	LoginID string `json:"loginId"`
-	Type    string `json:"type"`
-}
-
-type ChatgptAuthTokensLoginAccountResponse struct {
-	Type string `json:"type"`
-}
 
 type LogoutAccountResponse struct{}
 
@@ -2342,21 +1333,6 @@ const (
 	PatchApplyStatusDeclined   PatchApplyStatus = "declined"
 )
 
-type PatchChangeKind = json.RawMessage
-
-type AddPatchChangeKind struct {
-	Type string `json:"type"`
-}
-
-type DeletePatchChangeKind struct {
-	Type string `json:"type"`
-}
-
-type UpdatePatchChangeKind struct {
-	MovePath *string `json:"move_path,omitempty"`
-	Type     string  `json:"type"`
-}
-
 type Personality string
 
 const (
@@ -2429,18 +1405,6 @@ type RawResponseItemCompletedNotification struct {
 	TurnID   string       `json:"turnId"`
 }
 
-type ReadOnlyAccess = json.RawMessage
-
-type RestrictedReadOnlyAccess struct {
-	IncludePlatformDefaults *bool             `json:"includePlatformDefaults,omitempty"`
-	ReadableRoots           []AbsolutePathBuf `json:"readableRoots,omitempty"`
-	Type                    string            `json:"type"`
-}
-
-type FullAccessReadOnlyAccess struct {
-	Type string `json:"type"`
-}
-
 // ReasoningEffort See https://platform.openai.com/docs/guides/reasoning?api-mode=responses#get-started-with-reasoning
 type ReasoningEffort string
 
@@ -2456,25 +1420,6 @@ const (
 type ReasoningEffortOption struct {
 	Description     string          `json:"description"`
 	ReasoningEffort ReasoningEffort `json:"reasoningEffort"`
-}
-
-type ReasoningItemContent = json.RawMessage
-
-type ReasoningTextReasoningItemContent struct {
-	Text string `json:"text"`
-	Type string `json:"type"`
-}
-
-type TextReasoningItemContent struct {
-	Text string `json:"text"`
-	Type string `json:"type"`
-}
-
-type ReasoningItemReasoningSummary = json.RawMessage
-
-type SummaryTextReasoningItemReasoningSummary struct {
-	Text string `json:"text"`
-	Type string `json:"type"`
 }
 
 // ReasoningSummary A summary of the reasoning performed by the model. This can be useful for debugging and understanding the model's reasoning process. See https://platform.openai.com/docs/guides/reasoning?api-mode=responses#reasoning-summaries
@@ -2537,85 +1482,6 @@ type ResourceTemplate struct {
 	UriTemplate string  `json:"uriTemplate"`
 }
 
-type ResponseItem = json.RawMessage
-
-type MessageResponseItem struct {
-	Content []ContentItem `json:"content"`
-	EndTurn *bool         `json:"end_turn,omitempty"`
-	ID      *string       `json:"id,omitempty"`
-	Phase   *MessagePhase `json:"phase,omitempty"`
-	Role    string        `json:"role"`
-	Type    string        `json:"type"`
-}
-
-type ReasoningResponseItem struct {
-	Content          []ReasoningItemContent          `json:"content,omitempty"`
-	EncryptedContent *string                         `json:"encrypted_content,omitempty"`
-	ID               string                          `json:"id"`
-	Summary          []ReasoningItemReasoningSummary `json:"summary"`
-	Type             string                          `json:"type"`
-}
-
-type LocalShellCallResponseItem struct {
-	Action LocalShellAction `json:"action"`
-	// Set when using the Responses API.
-	CallID *string `json:"call_id,omitempty"`
-	// Legacy id field retained for compatibility with older payloads.
-	ID     *string          `json:"id,omitempty"`
-	Status LocalShellStatus `json:"status"`
-	Type   string           `json:"type"`
-}
-
-type FunctionCallResponseItem struct {
-	Arguments string  `json:"arguments"`
-	CallID    string  `json:"call_id"`
-	ID        *string `json:"id,omitempty"`
-	Name      string  `json:"name"`
-	Type      string  `json:"type"`
-}
-
-type FunctionCallOutputResponseItem struct {
-	CallID string                    `json:"call_id"`
-	Output FunctionCallOutputPayload `json:"output"`
-	Type   string                    `json:"type"`
-}
-
-type CustomToolCallResponseItem struct {
-	CallID string  `json:"call_id"`
-	ID     *string `json:"id,omitempty"`
-	Input  string  `json:"input"`
-	Name   string  `json:"name"`
-	Status *string `json:"status,omitempty"`
-	Type   string  `json:"type"`
-}
-
-type CustomToolCallOutputResponseItem struct {
-	CallID string                    `json:"call_id"`
-	Output FunctionCallOutputPayload `json:"output"`
-	Type   string                    `json:"type"`
-}
-
-type WebSearchCallResponseItem struct {
-	Action *WebSearchAction `json:"action,omitempty"`
-	ID     *string          `json:"id,omitempty"`
-	Status *string          `json:"status,omitempty"`
-	Type   string           `json:"type"`
-}
-
-type GhostSnapshotResponseItem struct {
-	GhostCommit GhostCommit `json:"ghost_commit"`
-	Type        string      `json:"type"`
-}
-
-type CompactionResponseItem struct {
-	EncryptedContent string `json:"encrypted_content"`
-	Type             string `json:"type"`
-}
-
-type OtherResponseItem struct {
-	Type string `json:"type"`
-}
-
 type ReviewDelivery string
 
 const (
@@ -2636,33 +1502,6 @@ type ReviewStartResponse struct {
 	Turn           Turn   `json:"turn"`
 }
 
-type ReviewTarget = json.RawMessage
-
-// UncommittedChangesReviewTarget Review the working tree: staged, unstaged, and untracked files.
-type UncommittedChangesReviewTarget struct {
-	Type string `json:"type"`
-}
-
-// BaseBranchReviewTarget Review changes between the current branch and the given base branch.
-type BaseBranchReviewTarget struct {
-	Branch string `json:"branch"`
-	Type   string `json:"type"`
-}
-
-// CommitReviewTarget Review the changes introduced by a specific commit.
-type CommitReviewTarget struct {
-	Sha string `json:"sha"`
-	// Optional human-readable label (e.g., commit subject) for UIs.
-	Title *string `json:"title,omitempty"`
-	Type  string  `json:"type"`
-}
-
-// CustomReviewTarget Arbitrary instructions, equivalent to the old free-form prompt.
-type CustomReviewTarget struct {
-	Instructions string `json:"instructions"`
-	Type         string `json:"type"`
-}
-
 type SandboxMode string
 
 const (
@@ -2670,31 +1509,6 @@ const (
 	SandboxModeWorkspaceWrite   SandboxMode = "workspace-write"
 	SandboxModeDangerFullAccess SandboxMode = "danger-full-access"
 )
-
-type SandboxPolicy = json.RawMessage
-
-type DangerFullAccessSandboxPolicy struct {
-	Type string `json:"type"`
-}
-
-type ReadOnlySandboxPolicy struct {
-	Access json.RawMessage `json:"access,omitempty"`
-	Type   string          `json:"type"`
-}
-
-type ExternalSandboxSandboxPolicy struct {
-	NetworkAccess json.RawMessage `json:"networkAccess,omitempty"`
-	Type          string          `json:"type"`
-}
-
-type WorkspaceWriteSandboxPolicy struct {
-	ExcludeSlashTmp     *bool             `json:"excludeSlashTmp,omitempty"`
-	ExcludeTmpdirEnvVar *bool             `json:"excludeTmpdirEnvVar,omitempty"`
-	NetworkAccess       *bool             `json:"networkAccess,omitempty"`
-	ReadOnlyAccess      json.RawMessage   `json:"readOnlyAccess,omitempty"`
-	Type                string            `json:"type"`
-	WritableRoots       []AbsolutePathBuf `json:"writableRoots,omitempty"`
-}
 
 type SandboxWorkspaceWrite struct {
 	ExcludeSlashTmp     *bool    `json:"exclude_slash_tmp,omitempty"`
@@ -2953,133 +1767,6 @@ type ThreadForkResponse struct {
 
 type ThreadID = string
 
-type ThreadItem = json.RawMessage
-
-type UserMessageThreadItem struct {
-	Content []UserInput `json:"content"`
-	ID      string      `json:"id"`
-	Type    string      `json:"type"`
-}
-
-type AgentMessageThreadItem struct {
-	ID    string        `json:"id"`
-	Phase *MessagePhase `json:"phase,omitempty"`
-	Text  string        `json:"text"`
-	Type  string        `json:"type"`
-}
-
-// PlanThreadItem EXPERIMENTAL - proposed plan item content. The completed plan item is authoritative and may not match the concatenation of `PlanDelta` text.
-type PlanThreadItem struct {
-	ID   string `json:"id"`
-	Text string `json:"text"`
-	Type string `json:"type"`
-}
-
-type ReasoningThreadItem struct {
-	Content []string `json:"content,omitempty"`
-	ID      string   `json:"id"`
-	Summary []string `json:"summary,omitempty"`
-	Type    string   `json:"type"`
-}
-
-type CommandExecutionThreadItem struct {
-	// The command's output, aggregated from stdout and stderr.
-	AggregatedOutput *string `json:"aggregatedOutput,omitempty"`
-	// The command to be executed.
-	Command string `json:"command"`
-	// A best-effort parsing of the command to understand the action(s) it will perform. This returns a list of CommandAction objects because a single shell command may be composed of many commands piped together.
-	CommandActions []CommandAction `json:"commandActions"`
-	// The command's working directory.
-	Cwd string `json:"cwd"`
-	// The duration of the command execution in milliseconds.
-	DurationMs *int64 `json:"durationMs,omitempty"`
-	// The command's exit code.
-	ExitCode *int64 `json:"exitCode,omitempty"`
-	ID       string `json:"id"`
-	// Identifier for the underlying PTY process (when available).
-	ProcessID *string                `json:"processId,omitempty"`
-	Status    CommandExecutionStatus `json:"status"`
-	Type      string                 `json:"type"`
-}
-
-type FileChangeThreadItem struct {
-	Changes []FileUpdateChange `json:"changes"`
-	ID      string             `json:"id"`
-	Status  PatchApplyStatus   `json:"status"`
-	Type    string             `json:"type"`
-}
-
-type MCPToolCallThreadItem struct {
-	// The duration of the MCP tool call in milliseconds.
-	DurationMs *int64             `json:"durationMs,omitempty"`
-	Error      *MCPToolCallError  `json:"error,omitempty"`
-	ID         string             `json:"id"`
-	Result     *MCPToolCallResult `json:"result,omitempty"`
-	Server     string             `json:"server"`
-	Status     MCPToolCallStatus  `json:"status"`
-	Tool       string             `json:"tool"`
-	Type       string             `json:"type"`
-}
-
-type DynamicToolCallThreadItem struct {
-	ContentItems []DynamicToolCallOutputContentItem `json:"contentItems,omitempty"`
-	// The duration of the dynamic tool call in milliseconds.
-	DurationMs *int64                `json:"durationMs,omitempty"`
-	ID         string                `json:"id"`
-	Status     DynamicToolCallStatus `json:"status"`
-	Success    *bool                 `json:"success,omitempty"`
-	Tool       string                `json:"tool"`
-	Type       string                `json:"type"`
-}
-
-type CollabAgentToolCallThreadItem struct {
-	// Last known status of the target agents, when available.
-	AgentsStates map[string]CollabAgentState `json:"agentsStates"`
-	// Unique identifier for this collab tool call.
-	ID string `json:"id"`
-	// Prompt text sent as part of the collab tool call, when available.
-	Prompt *string `json:"prompt,omitempty"`
-	// Thread ID of the receiving agent, when applicable. In case of spawn operation, this corresponds to the newly spawned agent.
-	ReceiverThreadIds []string `json:"receiverThreadIds"`
-	// Thread ID of the agent issuing the collab request.
-	SenderThreadID string `json:"senderThreadId"`
-	// Current status of the collab tool call.
-	Status json.RawMessage `json:"status"`
-	// Name of the collab tool that was invoked.
-	Tool json.RawMessage `json:"tool"`
-	Type string          `json:"type"`
-}
-
-type WebSearchThreadItem struct {
-	Action *WebSearchAction `json:"action,omitempty"`
-	ID     string           `json:"id"`
-	Query  string           `json:"query"`
-	Type   string           `json:"type"`
-}
-
-type ImageViewThreadItem struct {
-	ID   string `json:"id"`
-	Path string `json:"path"`
-	Type string `json:"type"`
-}
-
-type EnteredReviewModeThreadItem struct {
-	ID     string `json:"id"`
-	Review string `json:"review"`
-	Type   string `json:"type"`
-}
-
-type ExitedReviewModeThreadItem struct {
-	ID     string `json:"id"`
-	Review string `json:"review"`
-	Type   string `json:"type"`
-}
-
-type ContextCompactionThreadItem struct {
-	ID   string `json:"id"`
-	Type string `json:"type"`
-}
-
 type ThreadListParams struct {
 	// Optional archived filter; when set to true, only archived threads are returned. If false or null, only non-archived threads are returned.
 	Archived *bool `json:"archived,omitempty"`
@@ -3268,25 +1955,6 @@ type ThreadStartedNotification struct {
 	Thread Thread `json:"thread"`
 }
 
-type ThreadStatus = json.RawMessage
-
-type NotLoadedThreadStatus struct {
-	Type string `json:"type"`
-}
-
-type IDleThreadStatus struct {
-	Type string `json:"type"`
-}
-
-type SystemErrorThreadStatus struct {
-	Type string `json:"type"`
-}
-
-type ActiveThreadStatus struct {
-	ActiveFlags []ThreadActiveFlag `json:"activeFlags"`
-	Type        string             `json:"type"`
-}
-
 type ThreadStatusChangedNotification struct {
 	Status   ThreadStatus `json:"status"`
 	ThreadID string       `json:"threadId"`
@@ -3459,37 +2127,6 @@ type TurnSteerResponse struct {
 	TurnID string `json:"turnId"`
 }
 
-type UserInput = json.RawMessage
-
-type TextUserInput struct {
-	Text string `json:"text"`
-	// UI-defined spans within `text` used to render or persist special elements.
-	TextElements []TextElement `json:"text_elements,omitempty"`
-	Type         string        `json:"type"`
-}
-
-type ImageUserInput struct {
-	Type string `json:"type"`
-	URL  string `json:"url"`
-}
-
-type LocalImageUserInput struct {
-	Path string `json:"path"`
-	Type string `json:"type"`
-}
-
-type SkillUserInput struct {
-	Name string `json:"name"`
-	Path string `json:"path"`
-	Type string `json:"type"`
-}
-
-type MentionUserInput struct {
-	Name string `json:"name"`
-	Path string `json:"path"`
-	Type string `json:"type"`
-}
-
 // Verbosity Controls output length/detail on GPT-5 models via the Responses API. Serialized with lowercase values to match the OpenAI API.
 type Verbosity string
 
@@ -3498,29 +2135,6 @@ const (
 	VerbosityMedium Verbosity = "medium"
 	VerbosityHigh   Verbosity = "high"
 )
-
-type WebSearchAction = json.RawMessage
-
-type SearchWebSearchAction struct {
-	Queries []string `json:"queries,omitempty"`
-	Query   *string  `json:"query,omitempty"`
-	Type    string   `json:"type"`
-}
-
-type OpenPageWebSearchAction struct {
-	Type string  `json:"type"`
-	URL  *string `json:"url,omitempty"`
-}
-
-type FindInPageWebSearchAction struct {
-	Pattern *string `json:"pattern,omitempty"`
-	Type    string  `json:"type"`
-	URL     *string `json:"url,omitempty"`
-}
-
-type OtherWebSearchAction struct {
-	Type string `json:"type"`
-}
 
 type WebSearchMode string
 
